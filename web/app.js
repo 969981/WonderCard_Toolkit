@@ -178,7 +178,7 @@
         const label=document.createElement('label');label.className='field-label';label.textContent=(I.field(name)||name).replace('field.'+name,name)+(locked?' 🔒':'');
         const offset=document.createElement('span');offset.className='field-offset';offset.textContent=fmtOffset(spec.offset);
         top.append(label,offset);
-        const input=document.createElement('input');input.className='field-input';input.value=val;input.inputMode='numeric';input.disabled=locked;
+        const input=document.createElement('input');input.className='field-input';input.id='typed-'+section+'-'+name;label.htmlFor=input.id;input.value=val;input.inputMode='numeric';input.disabled=locked;
         field.append(top,input);parent.appendChild(field);
         input.addEventListener('focus',()=>{highlightedOffset=spec.offset;field.classList.add('focused');});
         input.addEventListener('blur',()=>field.classList.remove('focused'));
