@@ -164,11 +164,15 @@ export default function App() {
 
   return <main className="shell" onDragOver={e=>e.preventDefault()} onDrop={onDrop}>
     <header className="topbar">
-      <div className="brand"><WandSparkles size={22}/><span>WonderCard Pro Editor</span>
-        <span className="badge muted">v0.4 Alpha · 实验性</span></div>
+      <div className="brand"><WandSparkles size={22}/><span>{t(locale,"app.name")}</span>
+        <span className="badge muted">{t(locale,"app.alpha")}</span></div>
       <div className="flex items-center gap-2">
-        <span className="muted text-xs hidden md:inline">Windows · 本地离线 · 不联网</span>
-        <Button size="icon" variant="ghost" title="切换主题" onClick={()=>setTheme(x=>x==="dark"?"light":"dark")}>
+        <span className="muted text-xs hidden md:inline">{t(locale,"app.offline")}</span>
+        <select className="languageSelect" aria-label={t(locale,"app.language")} value={locale}
+          onChange={e=>setLocale(e.target.value as Locale)}>
+          {LANGUAGES.map(value=><option key={value} value={value}>{value}</option>)}
+        </select>
+        <Button size="icon" variant="ghost" title={t(locale,"app.theme")} onClick={()=>setTheme(x=>x==="dark"?"light":"dark")}>
           {theme==="dark"?<Sun size={17}/>:<Moon size={17}/>}
         </Button>
       </div>
@@ -176,36 +180,34 @@ export default function App() {
 
     <aside className="sidebar">
       <div className="flex gap-2">
-        <Button size="sm" className="flex-1" onClick={()=>void openFiles()}><FolderOpen size={15}/>打开文件</Button>
-        <Button size="icon" variant="outline" title="打开合成演示文件" onClick={()=>importItems([createSyntheticCard()])}><FilePlus2 size={16}/></Button>
+        <Button size="sm" className="flex-1" onClick={()=>void openFiles()}><FolderOpen size={15}/>{t(locale,"sidebar.open")}</Button>
+        <Button size="icon" variant="outline" title={t(locale,"sidebar.demo")} onClick={()=>importItems([createSyntheticCard()])}><FilePlus2 size={16}/></Button>
       </div>
-      <input ref={fileInput} type="file" accept=".wc6,.wc7,.wc6full,.wc7full,.bin"
+      <input ref={fileInput} type="file" accept=".wc6,.wc7,.wc6full,.wc7full,.bin,.json"
         multiple hidden onChange={event=>{void browserFiles(Array.from(event.target.files??[]));event.currentTarget.value="";}}/>
-      <div className="groupTitle">文件库 · {documents.length}</div>
+      <div className="groupTitle">{t(locale,"sidebar.library")} · {documents.length}</div>
       <div className="flex items-center rounded-md border border-border px-2 mb-2">
         <Search size={14} className="muted"/>
-        <input className="bg-transparent p-2 text-sm outline-none min-w-0 w-full" placeholder="搜索文件名" value={search} onChange={e=>setSearch(e.target.value)}/>
+        <input className="bg-transparent p-2 text-sm outline-none min-w-0 w-full" placeholder={t(locale,"sidebar.search")} value={search} onChange={e=>setSearch(e.target.value)}/>
       </div>
       {filtered.map(item=><button type="button" className={"fileItem"+(item.id===activeId?" active":"")}
         key={item.id} onClick={()=>{setActiveId(item.id);setSelectedField(null);}}>
         {item.detection.editable?<Braces size={16} className="shrink-0 mt-1"/>:<Lock size={16} className="shrink-0 mt-1"/>}
         <span className="min-w-0"><span className="block truncate text-sm font-medium">{item.filename}{hasChanges(item)?" *":""}</span>
-          <span className="block text-xs muted">{item.detection.format??"未识别"} · {item.original.length} bytes</span></span>
+          <span className="block text-xs muted">{item.detection.format??t(locale,"sidebar.readonly")} · {item.original.length} bytes</span></span>
       </button>)}
-      <div className="mt-4 px-2 text-xs muted leading-6">
-        WC6/WC7：基础字段实验性编辑<br/>Full / 未识别：保持只读<br/>所有文件均默认另存为
-      </div>
+      <div className="mt-4 px-2 text-xs muted leading-6">{t(locale,"sidebar.info")}</div>
     </aside>
 
     <section className="workspace">
       {!doc || !raw ?
         <div className="empty">
           <FolderOpen size={56} className="muted mb-4"/>
-          <h1 className="text-xl font-semibold mb-3">打开 WonderCard 文件</h1>
-          <p className="muted text-sm max-w-md mb-5">选择或拖入 WC6、WC7、Full 文件；仅在本地内存中读取。尚未验证的格式将保持只读。</p>
+          <h1 className="text-xl font-semibold mb-3">{t(locale,"empty.title")}</h1>
+          <p className="muted text-sm max-w-md mb-5">{t(locale,"empty.desc")}</p>
           <div className="flex gap-3">
-            <Button onClick={()=>void openFiles()}><FolderOpen size={16}/>选择文件</Button>
-            <Button variant="outline" onClick={()=>importItems([createSyntheticCard()])}><FilePlus2 size={16}/>合成示例</Button>
+            <Button onClick={()=>void openFiles()}><FolderOpen size={16}/>{t(locale,"empty.pick")}</Button>
+            <Button variant="outline" onClick={()=>importItems([createSyntheticCard()])}><FilePlus2 size={16}/>{t(locale,"empty.example")}</Button>
           </div>
         </div>
       :
@@ -213,46 +215,46 @@ export default function App() {
           <div className="toolbar">
             <div className="min-w-0 mr-auto">
               <div className="font-semibold text-sm truncate">{doc.filename} {hasChanges(doc)?"●":""}</div>
-              <div className="muted text-xs">{doc.detection.format??"未知格式"} · {doc.original.length} bytes · {changed.length} 字节修改</div>
+              <div className="muted text-xs">{doc.detection.format??t(locale,"reason.unknown")} · {doc.original.length} bytes · {t(locale,"toolbar.changed",{count:changed.length})}</div>
             </div>
-            <Button size="sm" variant="outline" disabled={doc.cursor===0} onClick={()=>changeHistory("undo")}><Undo2 size={15}/>撤销</Button>
-            <Button size="sm" variant="outline" disabled={doc.cursor===doc.history.length-1} onClick={()=>changeHistory("redo")}><Redo2 size={15}/>重做</Button>
-            <Button size="sm" variant="outline" onClick={()=>void performSave("json")}><FileDown size={15}/>导出 JSON</Button>
-            <Button size="sm" onClick={()=>void performSave("wc")}><Save size={15}/>另存为 WC</Button>
+            <Button size="sm" variant="outline" disabled={doc.cursor===0} onClick={()=>changeHistory("undo")}><Undo2 size={15}/>{t(locale,"toolbar.undo")}</Button>
+            <Button size="sm" variant="outline" disabled={doc.cursor===doc.history.length-1} onClick={()=>changeHistory("redo")}><Redo2 size={15}/>{t(locale,"toolbar.redo")}</Button>
+            <Button size="sm" variant="outline" onClick={()=>void performSave("json")}><FileDown size={15}/>{t(locale,"toolbar.export")}</Button>
+            <Button size="sm" onClick={()=>void performSave("wc")}><Save size={15}/>{t(locale,"toolbar.save")}</Button>
           </div>
           <div className="editorGrid">
             <div className="panel">
               <div className="panelTitle flex items-center justify-between">
-                <span>字段检查器</span>
-                <span className="badge">{doc.detection.editable?"部分可编辑":"只读"}</span>
+                <span>{t(locale,"editor.fields")}</span>
+                <span className="badge">{t(locale,doc.detection.editable?"editor.editable":"editor.readonly")}</span>
               </div>
               <div className="panelBody">
                 <div className="alert flex gap-2"><ShieldCheck className="shrink-0 mt-1" size={16}/>
-                  <span>{doc.detection.reason}。本阶段不做官方配信来源及游戏合法性保证。</span>
+                  <span>{reasonFor(locale,doc.detection.format,doc.detection.candidates.length,doc.filename)}。{t(locale,"editor.notice")}</span>
                 </div>
                 {fields.length?
                   fields.map(field=><FieldRow key={doc.id+"-"+field.key} doc={doc} field={field}
                     selected={selectedField===field.key} onSelect={()=>setSelectedField(field.key)}
-                    onEdit={value=>editActive(field.key,value)}/>) :
-                  <div className="text-sm muted">无法可靠判断格式。请使用 HEX 只读视图检查源文件。</div>}
+                    onEdit={value=>editActive(field.key,value)} locale={locale}/>) :
+                  <div className="text-sm muted">{t(locale,"editor.unknown")}</div>}
               </div>
             </div>
             <div className="panel flex flex-col">
               <div className="panelTitle flex items-center gap-2 justify-between">
-                <span>字节检查工作台</span>
-                <span className="text-xs muted">原始字节为权威</span>
+                <span>{t(locale,"editor.byte")}</span>
+                <span className="text-xs muted">{t(locale,"editor.authority")}</span>
               </div>
               <div className="flex border-b border-border px-3">
                 {(["hex","diff","json"] as const).map(view=><button type="button" key={view}
                   className={"tabButton"+(tab===view?" active":"")} onClick={()=>setTab(view)}>
-                  {view==="hex"?"HEX":view==="diff"?"差异 Diff":"JSON"}
+                  {t(locale,view==="hex"?"editor.hex":view==="diff"?"editor.diff":"editor.json")}
                 </button>)}
               </div>
               <div className="flex-1 min-h-0 overflow-hidden">
-                {tab==="hex"?<HexPane doc={doc} selectedField={selectedField} onSelectField={setSelectedField}/>:
-                  tab==="diff"?<div className="h-full overflow-auto"><DiffPane doc={doc}/></div>:
-                  <Suspense fallback={<div className="p-4 muted text-sm">正在加载本地 Monaco 编辑器…</div>}>
-                    <JsonPane doc={doc} theme={theme}/>
+                {tab==="hex"?<HexPane doc={doc} selectedField={selectedField} onSelectField={setSelectedField} onEditByte={updateByte} locale={locale}/>:
+                  tab==="diff"?<div className="h-full overflow-auto"><DiffPane doc={doc} locale={locale}/></div>:
+                  <Suspense fallback={<div className="p-4 muted text-sm">{t(locale,"editor.loading")}</div>}>
+                    <JsonPane doc={doc} theme={theme} locale={locale} onApply={text=>{void applyJson(text);}}/>
                   </Suspense>}
               </div>
             </div>
@@ -261,11 +263,11 @@ export default function App() {
       }
       {message?<div role="status" className="border-t border-border bg-surface px-4 py-2 text-xs flex gap-2 items-center">
         <RotateCcw size={12}/><span className="truncate">{message}</span>
-        <button type="button" className="ml-auto muted" onClick={()=>setMessage("")}>关闭</button></div>:null}
+        <button type="button" className="ml-auto muted" onClick={()=>setMessage("")}>{t(locale,"message.close")}</button></div>:null}
     </section>
-    <footer className="statusbar"><span>WonderCard Toolkit · Pro Editor</span><span>{doc?.detection.format??"无打开文件"}</span>
-      <span>{doc?"修改字节："+changed.length:"本地模式"}</span>
-      <span className="ml-auto">实验版 · 未经真实卡全面校验</span>
+    <footer className="statusbar"><span>WonderCard Toolkit · Pro Editor</span><span>{doc?.detection.format??t(locale,"status.none")}</span>
+      <span>{doc?t(locale,"toolbar.changed",{count:changed.length}):t(locale,"status.local")}</span>
+      <span className="ml-auto">{t(locale,"status.research")}</span>
     </footer>
   </main>;
 }
