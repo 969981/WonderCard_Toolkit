@@ -1,6 +1,6 @@
 # WonderCard Toolkit — 专业桌面编辑器方案
 
-状态：**已批准技术选型 / 规划已提交 / 新版工程尚未创建**  
+状态：**专业版工程已提交，持续开发中；真实发布和扩世代尚未完成**  
 分支：`feature/pro-editor-shadcn-tauri`  
 来源：`feature/studio-v0.3-i18n`（保留 `web/` 离线 v0.3、四语言 i18n、`wondercard/core.py` Python 核心）。
 
@@ -23,6 +23,11 @@ Windows-first、本地离线、以原始字节为权威的 Pokémon Mystery Gift
 | 桌面容器与系统 API | Tauri 2 + Rust | Win EXE/MSI/NSIS；最小文件权限；不启动本地 HTTP 服务 |
 | 二进制核心 | TypeScript 首选、必要时 Rust | 格式 adapter、不可变 snapshot、PatchSet、无损回写 |
 | 既有基线 | `web/` + `wondercard/core.py` | 保留至新实现通过一致性验收，禁止提前删除 |
+
+## 实施进度
+
+- [当前实际实现状态和 CI 证据](IMPLEMENTATION_STATUS.md)
+- [Draft PR #19](https://github.com/969981/WonderCard_Toolkit/pull/19)
 
 ## 文档地图
 

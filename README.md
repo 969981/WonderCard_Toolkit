@@ -1,6 +1,6 @@
 # WonderCard Toolkit
 
-> **专业编辑器分支（本分支）**：正在规划 React + TypeScript + Vite + Tailwind + shadcn/ui + Monaco + Tauri 2 的 Windows 专业工作台。已有 v0.3 离线前端与 Python 核心保持原样，新的实现尚未启动。见 [专业版实施计划](docs/pro-editor/README.md)、[工程架构](docs/pro-editor/ARCHITECTURE.md)、[迁移计划](docs/pro-editor/MIGRATION.md)、[任务板](docs/pro-editor/BACKLOG.md)。
+> **专业编辑器分支（开发中）**：React + TypeScript + Vite + Tailwind/shadcn/ui + Monaco + Tauri 2 工程已有可构建代码，基础 WC6/WC7 字段实验编辑、HEX/DIFF/JSON 查看及新桌面文件入口已提交。**未发布正式安装包，尚非全世代可写版本。** 旧版 `web/` 与 Python 核心保持原样。见 [当前实现状态](docs/pro-editor/IMPLEMENTATION_STATUS.md)、[专业版实施计划](docs/pro-editor/README.md)、[任务板](docs/pro-editor/BACKLOG.md)。
 
 > 全世代 Pokémon 配信档案馆、无损解析器与可视化编辑工作台（规划阶段）。
 
