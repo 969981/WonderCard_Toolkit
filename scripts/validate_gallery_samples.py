@@ -31,7 +31,14 @@ SAMPLES={
   'Released/Gen 9/SV/Wondercards/0006 SV - (Trainer) Gyarados (Ground Tera Type).wc9'],
  'wa9':[
   'Released/Gen 9/ZA/Wondercards/0101 ZA - PokéCenter Audino.wa9',
-  'Released/Gen 9/ZA/Wondercards/0103 ZA - Item Max Revive x5 & Full Restore x10 & Ultra Ball x10.wa9']
+  'Released/Gen 9/ZA/Wondercards/0103 ZA - Item Max Revive x5 & Full Restore x10 & Ultra Ball x10.wa9'],
+ 'wc5full':[
+  'Released/Gen 5/Wondercard Fulls/0002 BW - SMR2011 Karrablast (ENG).wc5full',
+  'Released/Gen 5/Wondercard Fulls/0028 BW - 2011WIN Darkrai (ENG).wc5full'],
+ 'pgf':['Released/Gen 5/Wondercards/JPN/0001 BW - ポケスマ Cubchoo (JPN).pgf'],
+ 'wc4':[
+  'Released/Gen 4/Wondercards/JPN/001 DP - Concert Chatot (JPN).wc4',
+  'Released/Gen 4/Wondercards/JPN/007 DP - Movie 2007 Darkrai (JPN).wc4']
 }
 
 def run(*,timeout=20):
