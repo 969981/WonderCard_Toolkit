@@ -1,0 +1,43 @@
+name: Studio i18n and offline build
+on:
+  push:
+    paths:
+      - "web/**"
+      - "scripts/**"
+      - ".github/workflows/studio-ci.yml"
+  pull_request:
+    paths:
+      - "web/**"
+      - "scripts/**"
+      - ".github/workflows/studio-ci.yml"
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Validate scripts
+        run: |
+          node --check web/manifest.js
+          node --check web/i18n.js
+          node --check web/app.js
+      - name: Verify locale keys and placeholders
+        run: node scripts/check_locales.js
+      - name: Rebuild single-file offline version
+        run: python scripts/build_standalone.py
+      - name: Check standalone safety and language module
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          html=Path('web/standalone.html').read_text(encoding='utf-8')
+          assert 'window.WC_I18N' in html
+          assert 'window.WonderCardStudio' in html
+          assert 'src="http' not in html and 'href="http' not in html
+          assert 'デセルシティ Arceus' not in html
+          print('Standalone self-contained, synthetic sample only: OK')
+          PY
