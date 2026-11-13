@@ -8,7 +8,8 @@
     "build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "test:real": "node -e \"if(!process.env.WONDERCARD_REAL_FIXTURES_DIR){console.error('Set WONDERCARD_REAL_FIXTURES_DIR');process.exit(2)}\" && vitest run src/lib/private-real.test.ts"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
