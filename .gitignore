@@ -1,0 +1,17 @@
+node_modules/
+dist/
+coverage/
+.vite/
+.cache/
+target/
+apps/studio/src-tauri/target/
+apps/studio/src-tauri/gen/
+.DS_Store
+*.log
+*.tmp
+.env
+.env.*
+!.env.example
+*.pyc
+__pycache__/
+tests/fixtures/generated-parity.json

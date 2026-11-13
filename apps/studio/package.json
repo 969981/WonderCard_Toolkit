@@ -1,0 +1,39 @@
+{
+  "name": "@wondercard/studio",
+  "private": true,
+  "version": "0.4.0-alpha.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "tauri": "tauri",
+    "test:real": "node -e \"if(!process.env.WONDERCARD_REAL_FIXTURES_DIR){console.error('Set WONDERCARD_REAL_FIXTURES_DIR');process.exit(2)}\" && vitest run src/lib/private-real.test.ts"
+  },
+  "dependencies": {
+    "@monaco-editor/react": "^4.7.0",
+    "@radix-ui/react-slot": "^1.5.0",
+    "@tauri-apps/api": "^2.12.3",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.540.0",
+    "monaco-editor": "^0.57.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "tailwind-merge": "^3.3.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.0",
+    "@tauri-apps/cli": "^2.12.2",
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^6.3.0",
+    "tailwindcss": "^4.1.0",
+    "typescript": "^5.9.3",
+    "vite": "^8.3.8",
+    "vitest": "^5.1.0",
+    "playwright": "^1.58.0"
+  }
+}

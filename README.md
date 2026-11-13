@@ -1,5 +1,7 @@
 # WonderCard Toolkit
 
+> **专业编辑器分支（开发中）**：React + TypeScript + Vite + Tailwind/shadcn/ui + Monaco + Tauri 2 工程已有可构建代码，基础 WC6/WC7 字段实验编辑、HEX/DIFF/JSON 查看及新桌面文件入口已提交。**未发布正式安装包，尚非全世代可写版本。** 旧版 `web/` 与 Python 核心保持原样。见 [当前实现状态](docs/pro-editor/IMPLEMENTATION_STATUS.md)、[专业版实施计划](docs/pro-editor/README.md)、[任务板](docs/pro-editor/BACKLOG.md)。
+
 > 全世代 Pokémon 配信档案馆、无损解析器与可视化编辑工作台（规划阶段）。
 
 本项目目标是研究、查看、检索、批量审计和**安全修改**历代 Mystery Gift / Wonder Card / 配信事件资源。本分支已包含可离线运行的 **WonderCard Studio v0.3 前端代码与 i18n**（见 [web/README.md](web/README.md)）；已引入 WC6/WC7 的 Python 核心模块。其他世代、PCD/PGF/BCAT 和完整 CLI 仍需按 Issues 实施，请勿把“规划格式”理解为“已支持编辑”。
