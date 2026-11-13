@@ -12,6 +12,7 @@ from hashlib import sha256
 from pathlib import Path
 import struct
 from typing import Any
+from .integrity import verify_wc9_checksum, update_wc9_checksum
 
 # Field entries are: name, little-endian kind, raw offset. Species for Gen9
 # means *internal* species ID, not a national dex number. CardType is structural
@@ -97,6 +98,12 @@ for key in ('wc8','wb8','wa8','wc9','wa9'):
     fmt = FORMATS[key]
     fmt['item_fields'] = {k: v for i in range(4) for k,v in ((f'item_{i+1}',('u16',fmt['item'] + i*fmt['item_stride'])),(f'quantity_{i+1}',('u16',fmt['item'] + i*fmt['item_stride'] + 2)))}
 
+WC9_SAFE_FIELDS = frozenset({
+    'pokemon.level', 'pokemon.met_level', 'pokemon.ball', 'pokemon.held_item',
+    *(f'pokemon.{field}_{i}' for field in ('move', 'relearn_move') for i in range(1, 5)),
+    *(f'pokemon.{field}_{stat}' for field in ('iv', 'ev') for stat in STATS),
+    *(f'item.{field}_{i}' for field in ('item', 'quantity') for i in range(1, 5)),
+})
 KIND_READ_ONLY = {'pgt','pcd','wc4','pgf','wc5full'}
 DRAFT_FORMATS = set(FORMATS) - KIND_READ_ONLY
 KINDS = {'u8':('<B',1), 'u16':('<H',2), 'u32':('<I',4)}
@@ -119,6 +126,9 @@ def _groups(raw: bytes, fmt: str) -> dict:
         result['pokemon'] = _decode(raw,spec['pokemon'])
     if spec.get('checksum') is not None:
         result['integrity'] = {'stored_checksum':struct.unpack_from('<H',raw,spec['checksum'])[0]}
+        if fmt == 'wc9':
+            check = verify_wc9_checksum(raw)
+            result['integrity'].update(calculated_checksum=check.computed,checksum_valid=check.matches)
     return result
 
 
@@ -129,12 +139,16 @@ def to_typed_document(raw: bytes, *, fmt: str, filename: str | None = None) -> d
         raise ValueError(f'{fmt} expects {FORMATS[fmt]["size"]} bytes, got {len(raw)}')
     f = _groups(raw,fmt)
     draft = fmt in DRAFT_FORMATS
+    crc_valid = fmt == 'wc9' and verify_wc9_checksum(raw).matches
     return {'schema':'wondercard-typed-draft-v1','format':fmt,'generation':FORMATS[fmt]['gen'],
             'source_filename':Path(filename).name if filename else None,
             'source_sha256':sha256(raw).hexdigest(),'byte_length':len(raw),'raw_hex':raw.hex(),
             'fields':f,'baseline_fields':deepcopy(f),'preview':{'generation':FORMATS[fmt]['gen'],'gift_type':f['card'].get('card_type',f['card'].get('gift_type')),'card_id':f['card'].get('card_id'),'species':f.get('pokemon',{}).get('species',f.get('pokemon',{}).get('species_internal'))},
-            'capability':'L2 semantic read + draft patches only; modified binary export LOCKED' if draft else 'L2 semantic read; L3 lossless no-op only',
-            'warnings':['Stored checksum and game re-import have not been cross-validated. Changed binary output is blocked.' if draft else 'Legacy gift inner encryption / conversion not validated; read-only.']}
+            'capability':('L4 experimental WC9 editing with verified original CRC' if crc_valid else
+                          'L2 semantic read + draft patches only; modified binary export LOCKED' if draft else 'L2 semantic read; L3 lossless no-op only'),
+            'warnings':(['CRC verified; edited card is a custom template. Official provenance / game import are NOT verified.'] if crc_valid else
+                        ['Stored checksum not validated or original invalid; modified binary output blocked.'] if draft else
+                        ['Legacy gift inner encryption / conversion not validated; read-only.'])}
 
 
 def draft_typed_document(doc: dict, *, preview_only: bool = False) -> tuple[bytes,list[dict]]:
@@ -172,8 +186,33 @@ def draft_typed_document(doc: dict, *, preview_only: bool = False) -> tuple[byte
             after = bytes(raw[offset:offset+KINDS[kind][1]])
             patches.append({'field':f'{section}.{name}','offset':f'0x{offset:03X}','before':before.hex(),'after':after.hex()})
     if patches and not preview_only:
-        raise ValueError('Changed binary export LOCKED: checksum/game validation is not complete. Use draft preview only.')
-    if _groups(bytes(raw),fmt) != proposed:
+        if fmt != 'wc9' or not verify_wc9_checksum(bytes.fromhex(doc['raw_hex'])).matches:
+            raise ValueError('Changed binary export LOCKED: checksum/game validation is not complete or source CRC is invalid.')
+        denied = [p['field'] for p in patches if p['field'] not in WC9_SAFE_FIELDS]
+        if denied:
+            raise ValueError('Changed binary export LOCKED for unsafe fields: ' + ', '.join(denied))
+        for patch in patches:
+            if patch['field'] in {'pokemon.level','pokemon.met_level'}:
+                value = struct.unpack_from('<B',raw,int(patch['offset'],16))[0]
+                if value > 100:
+                    raise ValueError('Level must be between 0 and 100')
+            if patch['field'].startswith('pokemon.iv_'):
+                value = struct.unpack_from('<B',raw,int(patch['offset'],16))[0]
+                if value not in {*range(32),253,254,255}:
+                    raise ValueError('IV must be 0..31 or a documented random/sentinel value')
+            if patch['field'].startswith('pokemon.ev_'):
+                value = struct.unpack_from('<B',raw,int(patch['offset'],16))[0]
+                if value > 252:
+                    raise ValueError('EV must be <= 252')
+        before_crc = bytes(raw[0x2C4:0x2C6])
+        checksum = update_wc9_checksum(raw)
+        patches.append({'field':'integrity.stored_checksum','offset':'0x2C4',
+                        'before':before_crc.hex(),'after':raw[0x2C4:0x2C6].hex(),
+                        'computed':checksum})
+        if not verify_wc9_checksum(raw).matches:
+            raise ValueError('WC9 checksum verification failed after patching')
+    decoded = _groups(bytes(raw),fmt)
+    if {k:v for k,v in decoded.items() if k!='integrity'} != {k:v for k,v in proposed.items() if k!='integrity'}:
         raise ValueError('Roundtrip field validation failed')
     return bytes(raw), patches
 
