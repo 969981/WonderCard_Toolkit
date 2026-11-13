@@ -16,19 +16,54 @@ from pywinauto import Desktop, keyboard
 from pywinauto.application import Application
 
 
-def await_dialog(label: str, timeout: float = 20):
-    needle = "open" if label == "open" else "save"
-    until = time.monotonic() + timeout
-    while time.monotonic() < until:
-        dialogs = Desktop(backend="win32").windows(class_name="#32770",visible_only=True)
-        matched = [dlg for dlg in dialogs if any(
-            part in dlg.window_text().lower() for part in
-            (("open","打开","choose") if needle=="open" else ("save","另存","保存"))
-        )]
-        if matched:
-            return matched[-1]
+def matching_dialogs(label:str):
+    words = ("open","打开","choose") if label=="open" else ("save","另存","保存")
+    dialogs=Desktop(backend="win32").windows(class_name="#32770",visible_only=True)
+    return [dlg for dlg in dialogs if any(x in dlg.window_text().lower() for x in words)]
+
+
+def await_dialog(label:str,timeout:float=20):
+    end=time.monotonic()+timeout
+    while time.monotonic()<end:
+        matches=matching_dialogs(label)
+        if matches: return matches[-1]
         time.sleep(0.3)
-    raise RuntimeError(f"Native {label} dialog did not become visible; runner may lack an interactive desktop")
+    raise RuntimeError("Native "+label+" dialog was not visible")
+
+
+def diagnostic_windows():
+    try:
+        windows=Desktop(backend="win32").windows(visible_only=True)
+        print("DIAG: windows (name,class)="+repr(
+            [(w.window_text()[:65],w.class_name()) for w in windows[:25]]))
+    except Exception as exc: print("DIAG: window enumeration error "+repr(exc))
+
+
+def diagnostic_webview(app):
+    try:
+        uia=Application(backend="uia").connect(process=app.process)
+        window=uia.window(title_re=".*WonderCard Pro Editor.*")
+        print("DIAG: WebView buttons="+repr([
+            item.window_text()[:65] for item in window.descendants(control_type="Button")[:25]
+        ]))
+        print("DIAG: WebView visible text="+repr([
+            item.window_text()[:65] for item in window.descendants(control_type="Text")[-25:]
+        ]))
+    except Exception as exc:
+        print("DIAG: WebView UIA unavailable: "+repr(exc))
+
+
+def click_webview_open_button(app)->bool:
+    try:
+        uia=Application(backend="uia").connect(process=app.process)
+        window=uia.window(title_re=".*WonderCard Pro Editor.*")
+        for button in window.descendants(control_type="Button"):
+            if button.window_text() in ("打开文件","Open files","開啟檔案","ファイルを開く"):
+                button.click_input()
+                return True
+    except Exception as exc:
+        print("DIAG: UIA button activation unavailable: "+repr(exc))
+    return False
 
 
 def choose_file(dialog, path: Path) -> None:
@@ -67,7 +102,15 @@ def run(executable: Path) -> None:
             window.wait("visible", timeout=30)
             window.set_focus()
             keyboard.send_keys("^o")
-            choose_file(await_dialog("open"),source)
+            try:
+                open_dialog=await_dialog("open",timeout=6)
+            except RuntimeError:
+                diagnostic_windows()
+                diagnostic_webview(app)
+                if not click_webview_open_button(app):
+                    print("DIAG: No accessible Open button; checking native dialog one last time")
+                open_dialog=await_dialog("open",timeout=15)
+            choose_file(open_dialog,source)
             time.sleep(1.2)
             window.set_focus()
             keyboard.send_keys("^s")
