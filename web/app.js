@@ -128,8 +128,14 @@
     }
     return crc;
   }
-  const wc9OriginalCRCValid=raw=>raw.length===0x2C8 &&
-    new DataView(raw.buffer,raw.byteOffset,raw.byteLength).getUint16(0x2C4,true)===crc16Ccitt(raw,0x2C4);
+  const VERIFIED_CRC_FORMATS=['wc8','wc9','wa9'];
+  function cardOriginalCRCValid(raw,format){
+    const layout=TYPED[format];
+    if(!layout||!VERIFIED_CRC_FORMATS.includes(format)||raw.length!==layout.size)return false;
+    const offset=layout.checksum;
+    return new DataView(raw.buffer,raw.byteOffset,raw.byteLength).getUint16(offset,true)===crc16Ccitt(raw,offset);
+  }
+  const wc9OriginalCRCValid=raw=>cardOriginalCRCValid(raw,'wc9');
   function wc9FieldSafe(field,value){
     if(field==='pokemon.level'||field==='pokemon.met_level')return value>=0&&value<=100;
     if(field.startsWith('pokemon.iv_'))return value<=31||[253,254,255].includes(value);
@@ -147,14 +153,17 @@
     if(layout.checksum!==null){
       const dv=new DataView(raw.buffer,raw.byteOffset,raw.byteLength);
       fields.integrity={stored_checksum:dv.getUint16(layout.checksum,true)};
-      if(format==='wc9'){fields.integrity.calculated_checksum=crc16Ccitt(raw,0x2C4);fields.integrity.checksum_valid=wc9OriginalCRCValid(raw);}
+      if(['wc8','wa9','wc9','wc5full'].includes(format)){
+        fields.integrity.calculated_checksum=format==='wc5full' ? crc16Ccitt(raw.slice(0,layout.checksum)) : crc16Ccitt(raw,layout.checksum);
+        fields.integrity.checksum_valid=fields.integrity.calculated_checksum===fields.integrity.stored_checksum;
+      }
     }
     return {schema:'wondercard-typed-draft-v1',format,generation:layout.gen,
       source_filename:filename||null,source_sha256:null,byte_length:raw.length,raw_hex:bytesToHex(raw),
       fields,baseline_fields:clone(fields),
       preview:{generation:layout.gen,gift_type:card.card_type??card.gift_type,card_id:card.card_id??null,species:fields.pokemon?.species??fields.pokemon?.species_internal??null},
-      capability:format==='wc9'&&wc9OriginalCRCValid(raw)?'L4 experimental WC9 editing; original CRC validated':layout.draft?'L2 semantic read + draft patches only; modified binary export LOCKED':'L2 semantic read; L3 lossless no-op only',
-      warnings:[format==='wc9'&&wc9OriginalCRCValid(raw)?t('typed.crcValid'):layout.draft?t('typed.locked'):t('archive.warning')]};
+      capability:VERIFIED_CRC_FORMATS.includes(format)&&cardOriginalCRCValid(raw,format)?'L4 experimental '+format.toUpperCase()+' editing; original CRC validated':layout.draft?'L2 semantic read + draft patches only; modified binary export LOCKED':'L2 semantic read; L3 lossless no-op only',
+      warnings:[VERIFIED_CRC_FORMATS.includes(format)&&cardOriginalCRCValid(raw,format)?t('typed.crcValid'):layout.draft?t('typed.locked'):t('archive.warning')]};
   }
   function typedApply(doc){
     const layout=TYPED[doc.format];
@@ -178,11 +187,11 @@
     const semantic=x=>Object.fromEntries(Object.entries(x).filter(([key])=>key!=='integrity'));
     if(JSON.stringify(semantic(fields))!==JSON.stringify(semantic(doc.fields)))throw Error('Draft byte reparse mismatch');
     const base=hexToBytes(doc.raw_hex);
-    const safe=doc.format==='wc9'&&wc9OriginalCRCValid(base)&&
+    const safe=VERIFIED_CRC_FORMATS.includes(doc.format)&&cardOriginalCRCValid(base,doc.format)&&
       modified.every(k=>layout.writable_fields.includes(k)&&wc9FieldSafe(k,proposed[k]));
     if(safe&&modified.length){
-      new DataView(raw.buffer,raw.byteOffset,raw.byteLength).setUint16(0x2C4,crc16Ccitt(raw,0x2C4),true);
-      if(!wc9OriginalCRCValid(raw))throw Error('WC9 checksum repair failed');
+      new DataView(raw.buffer,raw.byteOffset,raw.byteLength).setUint16(layout.checksum,crc16Ccitt(raw,layout.checksum),true);
+      if(!cardOriginalCRCValid(raw,doc.format))throw Error(doc.format.toUpperCase()+' checksum repair failed');
       modified.push('integrity.stored_checksum');
     }
     return {raw,modified,exportable:modified.length===0||safe};
