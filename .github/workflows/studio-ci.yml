@@ -1,9 +1,11 @@
-name: Studio i18n and offline build
+name: Studio i18n, archive read-only and offline build
 on:
   push:
     paths:
       - "web/**"
       - "scripts/**"
+      - "wondercard/**"
+      - "tests/**"
       - ".github/workflows/studio-ci.yml"
   pull_request:
     paths:
@@ -28,8 +30,14 @@ jobs:
           node --check web/app.js
       - name: Verify locale keys and placeholders
         run: node scripts/check_locales.js
+      - name: Test all named read-only format roundtrips
+        run: |
+          python -m unittest discover -s tests -p test_readonly_formats.py
+          python -m unittest discover -s tests -p test_editor_synthetic.py
       - name: Rebuild single-file offline version
         run: python scripts/build_standalone.py
+      - name: Confirm standalone matches generated source
+        run: git diff --exit-code -- web/standalone.html
       - name: Check standalone safety and language module
         run: |
           python - <<'PY'
