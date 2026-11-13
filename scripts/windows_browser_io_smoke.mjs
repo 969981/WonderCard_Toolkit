@@ -7,13 +7,18 @@ import { spawn } from "node:child_process";
 import { mkdtemp,readFile,rm,writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { setTimeout as sleep } from "node:timers/promises";
 
-const root=new URL("../",import.meta.url);
+const root=fileURLToPath(new URL("../",import.meta.url));
+const viteCli=join(root,"node_modules","vite","bin","vite.js");
 const work=await mkdtemp(join(tmpdir(),"wondercard-smoke-"));
-const server=spawn("npm",["run","dev","--","--host","127.0.0.1"],{
- cwd:root,env:process.env,stdio:"pipe",shell:process.platform==="win32"
+const server=spawn(process.execPath,[viteCli,"--host","127.0.0.1","--port","1420"],{
+ cwd:join(root,"apps","studio"),env:process.env,stdio:["ignore","pipe","pipe"]
 });
+let viteOutput="";
+server.stdout?.on("data",chunk=>{viteOutput+=String(chunk);});
+server.stderr?.on("data",chunk=>{viteOutput+=String(chunk);});
 let browser;
 async function ready() {
  for(let n=0;n<60;n++){
@@ -21,7 +26,7 @@ async function ready() {
    catch{}
    await sleep(500);
  }
- throw new Error("Vite preview did not start in time");
+ throw new Error("Vite preview did not start in time (exit="+server.exitCode+"): "+viteOutput.slice(-4000));
 }
 try {
  await ready();
