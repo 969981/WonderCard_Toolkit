@@ -178,6 +178,22 @@ export function edit(doc: RawDocument, fieldKey: string, input: FieldValue): Raw
   if (diff(old,updated).length===0) return doc;
   return { ...doc, history: [...doc.history.slice(0,doc.cursor+1),updated], cursor: doc.cursor+1 };
 }
+/** Edit one HEX byte within a verified writable field; unknown and Full stay locked. */
+export function canEditByte(doc: RawDocument, offset: number): boolean {
+  if (!doc.detection.editable || !Number.isInteger(offset) || offset<0 || offset>=doc.original.length) return false;
+  return descriptors(doc).some(f=>f.editable && offset>=f.offset && offset<f.offset+f.length);
+}
+export function editByte(doc: RawDocument, offset:number, input:number):RawDocument {
+  if (!canEditByte(doc,offset)) throw new Error("HEX offset outside writable field whitelist");
+  if (!Number.isInteger(input)||input<0||input>255) throw new Error("HEX byte must be 00..FF");
+  const old=currentBytes(doc),next=old.slice();
+  if (next[offset]===input) return doc;
+  next[offset]=input;
+  const candidate={...doc,history:[...doc.history.slice(0,doc.cursor+1),next],cursor:doc.cursor+1};
+  verifyExport(candidate);
+  return candidate;
+}
+
 export function undo(doc: RawDocument): RawDocument {
   return doc.cursor ? {...doc,cursor:doc.cursor-1}:doc;
 }
@@ -200,7 +216,13 @@ export function verifyExport(doc: RawDocument): Uint8Array {
         doc.original[(doc.detection.format.endsWith("full")?FULL_START:0)+0x51]) {
       throw new Error("卡片类型变化无效");
     }
-    for (const spec of descriptors(doc)) readField(bytes,doc.detection.format,spec);
+    for (const spec of descriptors(doc)) {
+      const value=readField(bytes,doc.detection.format,spec);
+      if (spec.kind==="date" && value===null) {
+        const encoded=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength).getUint32(spec.offset,true);
+        if (encoded!==0) throw new Error("Invalid raw date encoding after HEX edit");
+      }
+    }
   }
   return bytes;
 }

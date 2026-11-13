@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CORE_SIZE, FULL_SIZE, createDocument, currentBytes, descriptors, detect, diff, edit, hasChanges, readField, redo, undo, verifyExport } from "./wondercard";
+import { CORE_SIZE, FULL_SIZE, createDocument, currentBytes, descriptors, detect, diff, edit, editByte, canEditByte, hasChanges, readField, redo, undo, verifyExport } from "./wondercard";
 
 function sample(format: "wc6" | "wc7" | "wc6full" = "wc6"): Uint8Array {
   const full=format==="wc6full";
@@ -64,6 +64,22 @@ describe("raw byte invariants",()=>{
     expect(detect("truncated.wc6",data.slice(1)).format).toBeNull();
     const doc=createDocument("unknown.bin",data);
     expect(()=>edit(doc,"card_id",12)).toThrow();
+  });
+  it("gates HEX byte editing to writable fields and supports undo",()=>{
+    const doc=createDocument("hex.wc6",sample("wc6"));
+    expect(canEditByte(doc,0xd0)).toBe(true);
+    expect(canEditByte(doc,0x105)).toBe(false);
+    const next=editByte(doc,0xd0,0x32);
+    expect(diff(doc.original,verifyExport(next))).toEqual([{offset:0xd0,before:10,after:50}]);
+    expect(verifyExport(undo(next))).toEqual(doc.original);
+    expect(()=>editByte(doc,0x105,0)).toThrow();
+    expect(()=>editByte(doc,0xd0,256)).toThrow();
+    const full=createDocument("x.wc6full",sample("wc6full"));
+    expect(()=>editByte(full,0x208+0xd0,0x32)).toThrow();
+  });
+  it("blocks HEX edits that create an invalid raw date",()=>{
+    const doc=createDocument("date.wc6",sample("wc6"));
+    expect(()=>editByte(doc,0x4c,0xff)).toThrow();
   });
   it("rejects out-of-range value and readonly fields",()=>{
     const doc=createDocument("test.wc6",sample("wc6"));
