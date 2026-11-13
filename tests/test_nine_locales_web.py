@@ -7,7 +7,7 @@ ROOT=Path(__file__).resolve().parents[1]
 def run():
     page_html=(ROOT/'web/index.html').read_text(encoding='utf8')
     page_html=page_html.replace('<link rel="stylesheet" href="style.css">','<style>'+(ROOT/'web/style.css').read_text(encoding='utf8')+'</style>')
-    for name in ('manifest','i18n','app'):
+    for name in ('manifest','typed_manifest','i18n','app'):
         page_html=page_html.replace(f'<script src="{name}.js"></script>','<script>'+(ROOT/f'web/{name}.js').read_text(encoding='utf8')+'</script>')
     with sync_playwright() as p:
         browser=p.chromium.launch(headless=True,executable_path='/usr/bin/chromium',args=['--no-sandbox'])
