@@ -183,7 +183,7 @@ export default function App() {
         <Button size="sm" className="flex-1" onClick={()=>void openFiles()}><FolderOpen size={15}/>{t(locale,"sidebar.open")}</Button>
         <Button size="icon" variant="outline" title={t(locale,"sidebar.demo")} onClick={()=>importItems([createSyntheticCard()])}><FilePlus2 size={16}/></Button>
       </div>
-      <input ref={fileInput} type="file" accept=".wc6,.wc7,.wc6full,.wc7full,.bin,.json"
+      <input ref={fileInput} type="file" accept=".wc6,.wc7,.wc6full,.wc7full,.wc8,.wb8,.wa8,.wc9,.wa9,.pgf,.wc5full,.pgt,.pcd,.wc4,.bin,.json"
         multiple hidden onChange={event=>{void browserFiles(Array.from(event.target.files??[]));event.currentTarget.value="";}}/>
       <div className="groupTitle">{t(locale,"sidebar.library")} · {documents.length}</div>
       <div className="flex items-center rounded-md border border-border px-2 mb-2">
