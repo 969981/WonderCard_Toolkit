@@ -20,9 +20,9 @@ jobs:
         with:
           python-version: '3.12'
       - name: Run all offline regression tests
-        run: python -m unittest tests.test_checksum_matrix tests.test_gen4_crypto tests.test_editor_synthetic tests.test_readonly_formats tests.test_typed_draft tests.test_wc9_checksum -v
+        run: python -m unittest tests.test_checksum_matrix tests.test_gen4_crypto tests.test_gen8_gen9_experimental_write tests.test_editor_synthetic tests.test_readonly_formats tests.test_typed_draft tests.test_wc9_checksum -v
       - name: Test selected reference cards in memory
-        run: python scripts/validate_gallery_samples.py --out gallery-validation-report.json
+        run: python scripts/validate_gallery_samples.py --strict --out gallery-validation-report.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
