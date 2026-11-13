@@ -1,7 +1,7 @@
 import * as monaco from "monaco-editor";
 import Editor, { loader } from "@monaco-editor/react";
-import EditorWorker from "monaco-editor/esm/vs/editor/editor.worker.js?worker";
-import JsonWorker from "monaco-editor/esm/vs/language/json/json.worker.js?worker";
+import EditorWorker from "monaco-editor/editor/editor.worker.js?worker";
+import JsonWorker from "monaco-editor/language/json/json.worker.js?worker";
 import { safeJson, type RawDocument } from "@/lib/wondercard";
 
 // Bundle Monaco workers locally. No CDN or remote loader is required.
