@@ -1,8 +1,10 @@
 """Generate browser field map from the Python single source of truth."""
 import json
 from pathlib import Path
-from wondercard.typed import FORMATS
+import sys
 root = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(root))
+from wondercard.typed import FORMATS
 obj = {}
 for name, layout in FORMATS.items():
     item = {k: layout[k] for k in ('size','gen','kind')}
