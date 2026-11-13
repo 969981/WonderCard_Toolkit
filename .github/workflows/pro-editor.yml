@@ -25,6 +25,10 @@ jobs:
           node-version: "22"
       # No lockfile yet: use npm install, not npm ci. Lockfile will be committed after first working install.
       - run: npm install --no-audit --no-fund
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: python scripts/generate_parity_vectors.py
       - run: npm run typecheck
       - run: npm test
       - run: npm run build

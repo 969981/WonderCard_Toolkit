@@ -14,3 +14,4 @@ apps/studio/src-tauri/gen/
 !.env.example
 *.pyc
 __pycache__/
+tests/fixtures/generated-parity.json
