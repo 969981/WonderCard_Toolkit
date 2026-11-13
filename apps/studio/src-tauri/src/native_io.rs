@@ -21,7 +21,7 @@ pub async fn open_cards_native(app: AppHandle) -> Result<Vec<OpenedCard>, String
         let main_window=app.get_webview_window("main")
             .ok_or_else(||"Main window was not available for the native file picker".to_string())?;
         let selection = app.dialog().file().set_parent(&main_window)
-            .add_filter("WonderCard / JSON v2", &["wc6", "wc7", "wc6full", "wc7full", "bin", "json"])
+            .add_filter("WonderCard / JSON v2", &["wc6", "wc7", "wc6full", "wc7full", "wc8", "wb8", "wa8", "wc9", "wa9", "pgf", "wc5full", "pgt", "pcd", "wc4", "bin", "json"])
             .blocking_pick_files();
         let mut cards = Vec::new();
         for selected in selection.unwrap_or_default() {
@@ -60,7 +60,7 @@ pub async fn save_card_atomic(app:AppHandle, suggested_name:String,
         let dialog=if kind=="json" {
             dialog.add_filter("JSON v2",&["json"])
         } else {
-            dialog.add_filter("WonderCard",&["wc6","wc7","wc6full","wc7full","bin"])
+            dialog.add_filter("WonderCard",&["wc6","wc7","wc6full","wc7full","wc8","wb8","wa8","wc9","wa9","pgf","wc5full","pgt","pcd","wc4","bin"])
         };
         let Some(selected)=dialog.blocking_save_file() else {return Ok(false);};
         let target:PathBuf=selected.into_path().map_err(|e|e.to_string())?;
