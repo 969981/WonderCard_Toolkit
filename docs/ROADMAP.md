@@ -12,19 +12,19 @@
 ## 实施优先顺序（每条应创建 GitHub Issue）
 | ID | 优先级 | 任务 | 依赖 | 产出 |
 |---|---|---|---|---|
-| T01 | P0 | 将 v0.2 Python/HTML 实验代码导入仓库，记录已知问题 | 无 | 可运行基线、11 核心测试和 GUI 测试 |
-| T02 | P0 | format registry + probe 证据 + 格式候选/冲突处理 | T01 | JSON 格式检测报告、未知类型只读 |
-| T03 | P0 | 统一 RawSnapshot / PatchSet / JSON v2 / diff | T01,T02 | CLI/GUI 统一输出、SHA 保真 |
-| T04 | P0 | WC6/7/Full 实卡字段与 CRC/编码交叉验证 | T03 | 偏移证据表、golden fixtures、写入能力 gate |
-| T05 | P0 | Studio UI 编辑器、HEX/DIFF 联动、撤销/重做 | T03 | 端到端 GUI 测试与设计截图 |
-| T06 | P1 | Gen 4/5 PGT、PCD/WC4、PGF、WC5Full | T02,T03 | 适配器、合成/真实样本、转换说明 |
-| T07 | P1 | PL6、WB7、WR7、Gen 7 Special | T02,T03 | 独立读写规则与互操作测试 |
-| T08 | P1 | Gen 8/9 WC8/WB8/WA8/WC9/WA9 | T02,T03 | 重叠格式检测、Checksum、差异矩阵 |
-| T09 | P1 | EventsGallery 本地 FTS 索引、文件来源对照 | T02 | Released/Unreleased Gen1–9 元数据、无隐式下载 |
-| T10 | P2 | BCAT、Raid、Outbreak 外层容器研究 | T08,T09 | 提取/索引、格式与 Wonder Card 分离 |
-| T11 | P2 | Gen 1–3 Mystery Gift/e-Reader/事件脚本研究 | T02,T09 | 独立事件资源模型、只读资料索引 |
-| T12 | P2 | 批量审计与批量编辑 Dry Run | T03,T05,T09 | CSV/JSON、错误隔离、差异预演 |
-| T13 | P2 | Windows 发行包、GUI/CLI CI、国际化/可访问性 | T04,T05,T12 | 离线 release、签名策略与用户文档 |
+| [T01](https://github.com/969981/WonderCard_Toolkit/issues/2) | P0 | 将 v0.2 Python/HTML 实验代码导入仓库，记录已知问题 | 无 | 可运行基线、11 核心测试和 GUI 测试 |
+| [T02](https://github.com/969981/WonderCard_Toolkit/issues/3) | P0 | format registry + probe 证据 + 格式候选/冲突处理 | T01 | JSON 格式检测报告、未知类型只读 |
+| [T03](https://github.com/969981/WonderCard_Toolkit/issues/4) | P0 | 统一 RawSnapshot / PatchSet / JSON v2 / diff | T01,T02 | CLI/GUI 统一输出、SHA 保真 |
+| [T04](https://github.com/969981/WonderCard_Toolkit/issues/5) | P0 | WC6/7/Full 实卡字段与 CRC/编码交叉验证 | T03 | 偏移证据表、golden fixtures、写入能力 gate |
+| [T05](https://github.com/969981/WonderCard_Toolkit/issues/6) | P0 | Studio UI 编辑器、HEX/DIFF 联动、撤销/重做 | T03 | 端到端 GUI 测试与设计截图 |
+| [T06](https://github.com/969981/WonderCard_Toolkit/issues/7) | P1 | Gen 4/5 PGT、PCD/WC4、PGF、WC5Full | T02,T03 | 适配器、合成/真实样本、转换说明 |
+| [T07](https://github.com/969981/WonderCard_Toolkit/issues/8) | P1 | PL6、WB7、WR7、Gen 7 Special | T02,T03 | 独立读写规则与互操作测试 |
+| [T08](https://github.com/969981/WonderCard_Toolkit/issues/9) | P1 | Gen 8/9 WC8/WB8/WA8/WC9/WA9 | T02,T03 | 重叠格式检测、Checksum、差异矩阵 |
+| [T09](https://github.com/969981/WonderCard_Toolkit/issues/10) | P1 | EventsGallery 本地 FTS 索引、文件来源对照 | T02 | Released/Unreleased Gen1–9 元数据、无隐式下载 |
+| [T10](https://github.com/969981/WonderCard_Toolkit/issues/11) | P2 | BCAT、Raid、Outbreak 外层容器研究 | T08,T09 | 提取/索引、格式与 Wonder Card 分离 |
+| [T11](https://github.com/969981/WonderCard_Toolkit/issues/12) | P2 | Gen 1–3 Mystery Gift/e-Reader/事件脚本研究 | T02,T09 | 独立事件资源模型、只读资料索引 |
+| [T12](https://github.com/969981/WonderCard_Toolkit/issues/13) | P2 | 批量审计与批量编辑 Dry Run | T03,T05,T09 | CSV/JSON、错误隔离、差异预演 |
+| [T13](https://github.com/969981/WonderCard_Toolkit/issues/14) | P2 | Windows 发行包、GUI/CLI CI、国际化/可访问性 | T04,T05,T12 | 离线 release、签名策略与用户文档 |
 
 ## 每张 Issue 模板
 **目标**：解决什么用户问题；
