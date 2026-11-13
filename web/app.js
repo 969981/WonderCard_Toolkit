@@ -119,6 +119,23 @@
   }
   function readObject(raw,base,manifest,gen){const out={};for(const [k,v] of Object.entries(manifest))out[k]=readField(raw,base,v,gen);return out;}
 
+  function crc16Ccitt(raw, zeroAt=null){
+    let crc=0xFFFF;
+    for(let i=0;i<raw.length;i++){
+      const v=zeroAt!==null&&i>=zeroAt&&i<zeroAt+2?0:raw[i];
+      crc^=v<<8;
+      for(let j=0;j<8;j++)crc=((crc&0x8000)?(crc<<1)^0x1021:crc<<1)&0xFFFF;
+    }
+    return crc;
+  }
+  const wc9OriginalCRCValid=raw=>raw.length===0x2C8 &&
+    new DataView(raw.buffer,raw.byteOffset,raw.byteLength).getUint16(0x2C4,true)===crc16Ccitt(raw,0x2C4);
+  function wc9FieldSafe(field,value){
+    if(field==='pokemon.level'||field==='pokemon.met_level')return value>=0&&value<=100;
+    if(field.startsWith('pokemon.iv_'))return value<=31||[253,254,255].includes(value);
+    if(field.startsWith('pokemon.ev_'))return value<=252;
+    return true;
+  }
   function parseTyped(raw,format,filename){
     const layout=TYPED[format], card=readObject(raw,0,layout.card,layout.gen);
     const fields={card};
@@ -130,13 +147,14 @@
     if(layout.checksum!==null){
       const dv=new DataView(raw.buffer,raw.byteOffset,raw.byteLength);
       fields.integrity={stored_checksum:dv.getUint16(layout.checksum,true)};
+      if(format==='wc9'){fields.integrity.calculated_checksum=crc16Ccitt(raw,0x2C4);fields.integrity.checksum_valid=wc9OriginalCRCValid(raw);}
     }
     return {schema:'wondercard-typed-draft-v1',format,generation:layout.gen,
       source_filename:filename||null,source_sha256:null,byte_length:raw.length,raw_hex:bytesToHex(raw),
       fields,baseline_fields:clone(fields),
       preview:{generation:layout.gen,gift_type:card.card_type??card.gift_type,card_id:card.card_id??null,species:fields.pokemon?.species??fields.pokemon?.species_internal??null},
-      capability:layout.draft?'L2 semantic read + draft patches only; modified binary export LOCKED':'L2 semantic read; L3 lossless no-op only',
-      warnings:[layout.draft?'Stored checksum/game import not validated. Modified binary export blocked.':'Legacy encryption/format conversion not verified. Read-only.']};
+      capability:format==='wc9'&&wc9OriginalCRCValid(raw)?'L4 experimental WC9 editing; original CRC validated':layout.draft?'L2 semantic read + draft patches only; modified binary export LOCKED':'L2 semantic read; L3 lossless no-op only',
+      warnings:[format==='wc9'&&wc9OriginalCRCValid(raw)?t('typed.crcValid'):layout.draft?t('typed.locked'):t('archive.warning')]};
   }
   function typedApply(doc){
     const layout=TYPED[doc.format];
@@ -145,19 +163,29 @@
     if(raw.length!==layout.size)throw Error('Incorrect byte length');
     const baseline=parseTyped(raw,doc.format,'source.'+doc.format).fields;
     if(JSON.stringify(baseline)!==JSON.stringify(doc.baseline_fields))throw Error('Typed field baseline changed');
-    const proposed=flatten(doc.fields), original=flatten(baseline);
+    const proposed=flatten(doc.fields),original=flatten(baseline);
     if(Object.keys(proposed).sort().join('|')!==Object.keys(original).sort().join('|'))throw Error('Field structure changed');
     const modified=[];
     for(const key of Object.keys(proposed)){
       if(proposed[key]===original[key])continue;
       const [section,name]=key.split('.');
-      if(!layout.draft||section==='integrity'||['card_type','gift_type','species_internal'].includes(name))throw Error('Read-only field: '+key);
+      if(!layout.draft||section==='integrity'||['card_type','gift_type','species_internal'].includes(name))
+        throw Error('Read-only field: '+key);
       const spec=layout[section]?.[name];if(!spec)throw Error('Unmapped field: '+key);
       writeField(raw,0,spec,proposed[key],layout.gen);modified.push(key);
     }
-    if(JSON.stringify(parseTyped(raw,doc.format,'draft.'+doc.format).fields)!==JSON.stringify(doc.fields))
-      throw Error('Draft byte reparse mismatch');
-    return {raw,modified};
+    const fields=parseTyped(raw,doc.format,'draft.'+doc.format).fields;
+    const semantic=x=>Object.fromEntries(Object.entries(x).filter(([key])=>key!=='integrity'));
+    if(JSON.stringify(semantic(fields))!==JSON.stringify(semantic(doc.fields)))throw Error('Draft byte reparse mismatch');
+    const base=hexToBytes(doc.raw_hex);
+    const safe=doc.format==='wc9'&&wc9OriginalCRCValid(base)&&
+      modified.every(k=>layout.writable_fields.includes(k)&&wc9FieldSafe(k,proposed[k]));
+    if(safe&&modified.length){
+      new DataView(raw.buffer,raw.byteOffset,raw.byteLength).setUint16(0x2C4,crc16Ccitt(raw,0x2C4),true);
+      if(!wc9OriginalCRCValid(raw))throw Error('WC9 checksum repair failed');
+      modified.push('integrity.stored_checksum');
+    }
+    return {raw,modified,exportable:modified.length===0||safe};
   }
   function drawTypedFields(doc){
     const layout=TYPED[doc.format];
@@ -308,7 +336,7 @@
   async function importOne(file){if(file.name.toLowerCase().endsWith('.json'))await importJSON(file.name,await file.text());else await importBytes(file.name,new Uint8Array(await file.arrayBuffer()));}
   async function importFiles(incoming){let ok=0,errs=[];for(const file of incoming){try{await importOne(file);ok++;}catch(err){errs.push(`${file.name}: ${err.message}`);}}if(errs.length)toast(errs.slice(0,3).join(' | '),true);else if(ok)toast(t('files.imported',{n:ok}));}
   function current(){return files[selected];}
-  function currentState(){const entry=current();if(!entry)return null;const doc=entry.doc;const {raw,modified}=applyChanges(doc);const baseline=hexToBytes(doc.raw_hex);return {entry,doc,raw,baseline,modified,diff:getDiff(baseline,raw)};}
+  function currentState(){const entry=current();if(!entry)return null;const doc=entry.doc;const {raw,modified,exportable=true}=applyChanges(doc);const baseline=hexToBytes(doc.raw_hex);return {entry,doc,raw,baseline,modified,exportable,diff:getDiff(baseline,raw)};}
   function displayField(obj,spec,key,section,doc){
     const value=obj[key],base=section==='full'?0:doc.format.endsWith('full')?FULL_START:0;
     const absolute=base+spec.offset,edited=doc.baseline_fields[section==='header'?'ignored':section];
@@ -369,7 +397,7 @@
     });
     $('file-list').innerHTML=filtered.length?filtered.map(({entry,index})=>{
       const f=entry.doc.fields,dirty=Object.keys(flatten(f)).some(k=>flatten(f)[k]!==flatten(entry.doc.baseline_fields)[k]);
-      return `<button class="file-entry${index===selected?' selected':''}" data-index="${index}" role="option" aria-selected="${index===selected}"><span class="file-symbol">${entry.doc.format.toUpperCase().replace('FULL','F')}</span><span class="file-info"><strong title="${escapeHtml(entry.filename)}">${escapeHtml(cardName(entry))}${dirty?' •':''}</strong><small>${isArchive(entry.doc.format)?escapeHtml(t('archive.readonly')):isTyped(entry.doc.format)?('GEN '+entry.doc.generation+' · '+(TYPED[entry.doc.format].draft?'DRAFT':'READ ONLY')):`#${f.card_id} · ${escapeHtml(f.date||t('files.invalidDate'))}`}</small></span></button>`;
+      return `<button class="file-entry${index===selected?' selected':''}" data-index="${index}" role="option" aria-selected="${index===selected}"><span class="file-symbol">${entry.doc.format.toUpperCase().replace('FULL','F')}</span><span class="file-info"><strong title="${escapeHtml(entry.filename)}">${escapeHtml(cardName(entry))}${dirty?' •':''}</strong><small>${isArchive(entry.doc.format)?escapeHtml(t('archive.readonly')):isTyped(entry.doc.format)?('GEN '+entry.doc.generation+' · '+(entry.doc.format==='wc9'&&entry.doc.fields.integrity?.checksum_valid?'CRC OK':TYPED[entry.doc.format].draft?'DRAFT':'READ ONLY')):`#${f.card_id} · ${escapeHtml(f.date||t('files.invalidDate'))}`}</small></span></button>`;
     }).join(''):`<div class="no-results">${escapeHtml(t('files.none'))}</div>`;
     document.querySelectorAll('.file-entry').forEach(btn=>btn.addEventListener('click',()=>{selected=Number(btn.dataset.index);render();}));
   }
@@ -382,8 +410,8 @@
     $('card-subtitle').textContent=isTyped(doc.format)?doc.capability:isArchive(doc.format)?t('archive.readonly'):`${entry.filename} · ${fields.pokemon?'No.'+fields.pokemon.species:kindName(fields)}`;
     $('hero-id').textContent=isTyped(doc.format)?'#'+String(fields.card?.card_id??'—'):isArchive(doc.format)?'—':'#'+String(fields.card_id).padStart(4,'0');
     $('hero-date').textContent=isTyped(doc.format)?'—':fields.date||t('hero.unknownDate');$('hero-size').textContent=doc.byte_length+' bytes';
-    $('export-bin').disabled=(doc.format.endsWith('full')||isTyped(doc.format))&&modified.length>0;
-    $('export-bin').title=$('export-bin').disabled?(isTyped(doc.format)?'Checksum / game validation pending':t('error.fullLocked')):'';
+    $('export-bin').disabled=(doc.format.endsWith('full')&&modified.length>0)||(isTyped(doc.format)&&modified.length>0&&!state.exportable);
+    $('export-bin').title=$('export-bin').disabled?(isTyped(doc.format)?t('typed.locked'):t('error.fullLocked')):isTyped(doc.format)&&modified.length?t('typed.crcValid'):'';
   }
   function drawHex(state){
     const {raw,diff}=state, changed=new Set(diff.map(x=>x.offset));
@@ -395,7 +423,7 @@
     const view=$('hex-view'),oldScroll=view.scrollTop;view.innerHTML=lines.join('');view.scrollTop=oldScroll;
     view.querySelectorAll('button').forEach(btn=>btn.addEventListener('click',()=>{highlightedOffset=Number(btn.dataset.offset);view.querySelectorAll('button.selected').forEach(n=>n.classList.remove('selected'));btn.classList.add('selected');$('hex-validation').textContent=t('validation.selected',{offset:fmtOffset(highlightedOffset),value:'0x'+raw[highlightedOffset].toString(16).toUpperCase().padStart(2,'0')});}));
     $('diff-view').innerHTML=diff.length?diff.map(x=>`<div class="diff-item"><b>${fmtOffset(x.offset)}</b><span class="from"> &nbsp; ${x.old.toString(16).toUpperCase().padStart(2,'0')}</span> → <span class="to">${x.now.toString(16).toUpperCase().padStart(2,'0')}</span></div>`).join(''):`<p>${escapeHtml(t('diff.empty'))}</p>`;
-    $('hex-validation').textContent=isTyped(state.doc.format)&&state.modified.length?'DRAFT ONLY · BINARY EXPORT LOCKED':state.doc.format.endsWith('full')&&state.modified.length?t('validation.fullLocked'):t('validation.untouched');
+    $('hex-validation').textContent=isTyped(state.doc.format)&&state.modified.length?(state.exportable?t('typed.crcValid'):t('typed.locked')):state.doc.format.endsWith('full')&&state.modified.length?t('validation.fullLocked'):t('validation.untouched');
   }
   function drawJson(state){
     const doc=clone(state.doc);doc.preview=makePreview(doc.fields,doc.format,state.raw);doc.notes='Edit fields only. raw_hex is original bytes; changes exist in fields.';
@@ -443,7 +471,7 @@
   function toast(msg,error=false){const box=$('toast');box.textContent=msg;box.className='toast show'+(error?' error':'');clearTimeout(toast.timer);toast.timer=setTimeout(()=>box.className='toast',4500);}
   function download(filename,bytes,type){const blob=new Blob([bytes],{type});const url=URL.createObjectURL(blob);const link=document.createElement('a');link.href=url;link.download=filename;document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),5000);}
   function basenameWithoutExt(s){return s.replace(/\.(wc6|wc7|wc6full|wc7full|json|pgt|pcd|wc4|pgf|wc5full|pl6|wb7|wb7full|wr7|wc8|wc8full|wb8|wa8|wc9|wa9)$/i,'');}
-  function exportBinary(){try{const state=currentState();if(!state)return;if(isTyped(state.doc.format)&&state.modified.length)throw Error('Unverified checksum: modified binary export is locked');if(state.doc.format.endsWith('full')&&state.modified.length)throw Error(t('error.fullLocked'));
+  function exportBinary(){try{const state=currentState();if(!state)return;if(isTyped(state.doc.format)&&state.modified.length&&!state.exportable)throw Error(t('typed.locked'));if(state.doc.format.endsWith('full')&&state.modified.length)throw Error(t('error.fullLocked'));
       const filename=basenameWithoutExt(state.entry.filename)+((isArchive(state.doc.format)||isTyped(state.doc.format))?'_copy':'_edited')+'.'+state.doc.format;
       download(filename,state.raw,'application/octet-stream');toast(t('toast.exportBin',{filename,n:state.diff.length}));
     }catch(e){toast(e.message,true);}}
@@ -483,6 +511,6 @@
     importBytes('synthetic_demo.wc6',bytes).then(()=>toast(t('files.imported',{n:1}))).catch(e=>toast(e.message,true));
   }
   // Public developer API used by automated roundtrip checks and embedders.
-  window.WonderCardStudio={parse,applyChanges,getDiff,importBytes,importJSON,getFiles:()=>files,getLocale:()=>I.getLocale(),setLocale:lang=>I.setLocale(lang),select:index=>{selected=index;render();},currentState};
+  window.WonderCardStudio={parse,applyChanges,getDiff,crc16Ccitt,wc9OriginalCRCValid,importBytes,importJSON,getFiles:()=>files,getLocale:()=>I.getLocale(),setLocale:lang=>I.setLocale(lang),select:index=>{selected=index;render();},currentState};
   init();
 })();
