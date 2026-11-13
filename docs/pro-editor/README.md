@@ -27,6 +27,8 @@ Windows-first、本地离线、以原始字节为权威的 Pokémon Mystery Gift
 ## 实施进度
 
 - [当前实际实现状态和 CI 证据](IMPLEMENTATION_STATUS.md)
+- [Rust 原生文件打开与安全不覆盖保存设计](ATOMIC_SAVE.md)
+- [本地私有真实卡 Python/TypeScript 对照](PRIVATE_REAL_PARITY.md)
 - [Windows 桌面实机与 Edge 操作测试清单](WINDOWS_SMOKE.md)
 - [Draft PR #19](https://github.com/969981/WonderCard_Toolkit/pull/19)
 

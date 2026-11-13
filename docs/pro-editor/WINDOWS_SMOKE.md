@@ -58,3 +58,11 @@ fc.exe /b .\synthetic.wc6 .\synthetic_edited.wc6
 - 当前 Tauri Save As 使用存在性检查+写文件，尚未实现完整的原子临时写入/崩溃回滚；不可宣称生产级安全保存。
 - 全世代格式仍按 `docs/FORMAT_MATRIX.md` 的 L0-L5 独立门禁推进。
 - “支持在编辑器中改动字段”与“官方来源/游戏内合法性已验证”是不同概念。
+
+## 第三轮自动化补充
+
+- `src-tauri/src/native_io.rs` 使用 Rust DialogExt 在已安装桌面端执行真正的系统 Open/Save 对话框；renderer 的通用 `fs:allow-write-file` 已撤回。
+- Windows Rust release 测试已完成 8 项，运行日志可见 [#43359519944](https://github.com/969981/WonderCard_Toolkit/actions/runs/43359519944)。
+- 真实 NSIS 安装及启动检查已通过 [#43359645845](https://github.com/969981/WonderCard_Toolkit/actions/runs/43359645845)。
+- `scripts/windows_native_dialog_smoke.py` 使用 pywinauto 尝试操作安装版的 Open / Save As；CI 非阻断，若图形会话不可用则不应视为已通过，必须查看该步骤日志中的 `PASS:`。
+- Windows 原子 Save As 用 `hard_link` 不覆盖式发布，失败时拒绝使用不安全的文件系统回退；不等于已验证突然断电和远程文件系统。
