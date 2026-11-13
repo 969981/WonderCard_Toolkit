@@ -1,9 +1,11 @@
+import {TYPED_FORMATS,isTypedFormat,type TypedFormat} from "./typed-v07";
+
 /**
  * Pro Editor experimental WC6/WC7 raw-byte core.
  * Legacy reference: web/manifest.js, wondercard/core.py.
  * No authenticity or target-game validation is implied.
  */
-export type Format = "wc6" | "wc7" | "wc6full" | "wc7full";
+export type Format = "wc6" | "wc7" | "wc6full" | "wc7full" | TypedFormat;
 export type FieldValue = number | string | null;
 export type FieldKind = "u8" | "u16" | "u32" | "date" | "string";
 export interface FieldSpec {
@@ -49,12 +51,25 @@ const PK: readonly FieldSpec[] = [
   { key: "pokemon.level", label: "等级", offset: 0xd0, length: 1, kind: "u8", editable: true }
 ];
 
+const LEGACY_FORMATS = ["wc6", "wc7", "wc6full", "wc7full"] as const;
+const isLegacyFormat = (value:string):value is typeof LEGACY_FORMATS[number] =>
+  LEGACY_FORMATS.some(format=>format===value);
 export const isFormat = (value: string): value is Format =>
-  ["wc6", "wc7", "wc6full", "wc7full"].includes(value);
+  isLegacyFormat(value) || isTypedFormat(value);
 
 export function detect(filename: string, bytes: Uint8Array): Detection {
   const ext = filename.toLowerCase().split(".").at(-1) ?? "";
-  if (isFormat(ext)) {
+  // v0.7 Gen4/5/8/9 layouts: length + user-supplied extension is a *viewing*
+  // hint only. No independent payload authenticity or game import guarantees.
+  if (isTypedFormat(ext)) {
+    const layout=TYPED_FORMATS[ext];
+    if (bytes.length!==layout.size) {
+      return {format:null,candidates:[],editable:false,reason:"v0.7 typed format size mismatch"};
+    }
+    return {format:ext,candidates:[ext],editable:false,
+      reason:"v0.7 schema preview only: all edits and modified binary export remain locked"};
+  }
+  if (isLegacyFormat(ext)) {
     const expected = ext.endsWith("full") ? FULL_SIZE : CORE_SIZE;
     if (bytes.length !== expected) {
       return { format: null, candidates: [], editable: false, reason: "扩展名与预期文件长度不符" };
@@ -66,8 +81,11 @@ export function detect(filename: string, bytes: Uint8Array): Detection {
       reason: ext.endsWith("full") ? "Full 校验/重封装未验证，仅允许原样导出" : "依据文件扩展名与长度识别；不代表官方来源验证"
     };
   }
-  const candidates: Format[] = bytes.length === CORE_SIZE ? ["wc6", "wc7"] :
-    bytes.length === FULL_SIZE ? ["wc6full", "wc7full"] : [];
+  const legacyCandidates:Format[] = bytes.length === CORE_SIZE ? ["wc6","wc7"] :
+    bytes.length === FULL_SIZE ? ["wc6full","wc7full"] : [];
+  const typedCandidates = (Object.keys(TYPED_FORMATS) as TypedFormat[])
+    .filter(format=>TYPED_FORMATS[format].size===bytes.length);
+  const candidates:Format[]=[...legacyCandidates,...typedCandidates];
   return {
     format: null,
     candidates,
@@ -90,6 +108,18 @@ function validDate(value: string): boolean {
 }
 export function descriptors(doc: RawDocument): FieldSpec[] {
   if (!doc.detection.format) return [];
+  if (isTypedFormat(doc.detection.format)) {
+    const layout=TYPED_FORMATS[doc.detection.format];
+    const group=(section:"card"|"pokemon"|"item"):FieldSpec[]=>
+      Object.entries(layout[section]).map(([key,field])=>({
+        key:section+"."+key, label:section+"."+key,
+        offset:field.offset, length:field.size, kind:field.kind, editable:false
+      }));
+    // The kind selector is only a structural hint; incorrect/incomplete source
+    // cards remain read-only even when their length and extension match.
+    const giftKind=currentBytes(doc)[layout.kind];
+    return [...group("card"),...(giftKind===1?group("pokemon"):giftKind===2?group("item"):[])];
+  }
   const base = doc.detection.format.endsWith("full") ? FULL_START : 0;
   const view = new DataView(currentBytes(doc).buffer);
   const kind = view.getUint8(base + 0x51);
