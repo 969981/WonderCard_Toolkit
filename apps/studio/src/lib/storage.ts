@@ -1,4 +1,4 @@
-import { isTauri } from "@tauri-apps/api/core";
+import { invoke, isTauri } from "@tauri-apps/api/core";
 import { exportDocumentJson, importDocumentJson } from "./json";
 import type { RawDocument } from "./wondercard";
 import { verifyExport } from "./wondercard";
@@ -30,21 +30,24 @@ export async function fromBrowserFiles(files:readonly File[]):Promise<ImportedFi
   }
   return output;
 }
-export async function chooseLocalFiles():Promise<ImportedFile[] | null> {
-  if(!isTauri())return null;
-  const {open}=await import("@tauri-apps/plugin-dialog");
-  const {readFile}=await import("@tauri-apps/plugin-fs");
-  const selected=await open({multiple:true,directory:false,
-    filters:[{name:"WonderCard/JSON",extensions:["wc6","wc7","wc6full","wc7full","bin","json"]}]});
-  if(!selected)return [];
-  const paths=Array.isArray(selected)?selected:[selected], result:ImportedFile[]=[];
-  for(const path of paths) {
-    const bytes=await readFile(path);
-    const filename=path.split(/[\\/]/).pop()??path;
-    result.push(await decodeImported(filename,bytes,path));
+type NativeCard = {
+  filename: string;
+  sourcePath: string;
+  bytes: number[];
+};
+/** Native dialog selection AND file reading are handled by one Rust command. */
+export async function chooseLocalFiles(): Promise<ImportedFile[] | null> {
+  if(!isTauri()) return null;
+  const selected=await invoke<NativeCard[]>("open_cards_native");
+  const output: ImportedFile[]=[];
+  for(const item of selected) {
+    if(!Array.isArray(item.bytes)) throw new Error("Invalid native file response");
+    const raw=Uint8Array.from(item.bytes);
+    output.push(await decodeImported(item.filename,raw,item.sourcePath));
   }
-  return result;
+  return output;
 }
+
 function browserDownload(name:string,value:Uint8Array|string,mime:string) {
   const payload=typeof value==="string"?value:
     value.buffer.slice(value.byteOffset,value.byteOffset+value.byteLength) as ArrayBuffer;
@@ -60,16 +63,10 @@ export async function saveAs(doc:RawDocument,kind:"wc"|"json"):Promise<boolean> 
   const value=kind==="json"?await exportDocumentJson(doc):bytes;
   const mime=kind==="json"?"application/json":"application/octet-stream";
   if(!isTauri()) { browserDownload(desired,value,mime);return true; }
-  const {save}=await import("@tauri-apps/plugin-dialog");
-  const {exists,writeFile,writeTextFile}=await import("@tauri-apps/plugin-fs");
-  const path=await save({defaultPath:desired,
-    filters:kind==="json"?[{name:"JSON",extensions:["json"]}]:
-      [{name:"WonderCard",extensions:[doc.detection.format??"bin"]}]});
-  if(!path)return false;
-  if(doc.sourcePath && path.toLowerCase()===doc.sourcePath.toLowerCase())
-    throw new Error("禁止覆盖原始文件，请另存为新文件");
-  if(await exists(path))throw new Error("目标已存在，请选择新的文件名");
-  if(kind==="json") await writeTextFile(path,value as string);
-  else await writeFile(path,bytes);
-  return true;
+  // Native Save dialog + atomic, no-clobber commit live in a single Rust command.
+  // Renderer code never receives a write-capable path-based API.
+  const data=kind==="json" ? new TextEncoder().encode(String(value)) : bytes;
+  return invoke<boolean>("save_card_atomic",{
+    suggestedName:desired,kind,data:Array.from(data)
+  });
 }
