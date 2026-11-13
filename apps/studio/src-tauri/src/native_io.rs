@@ -24,20 +24,24 @@ pub async fn open_cards_native(app: AppHandle) -> Result<Vec<OpenedCard>, String
         let mut cards = Vec::new();
         for selected in selection.unwrap_or_default() {
             let path = selected.into_path().map_err(|e|e.to_string())?;
-            let ext = path.extension().and_then(|x|x.to_str()).unwrap_or("").to_ascii_lowercase();
-            let limit = if ext=="json" {MAX_JSON} else {MAX_BINARY};
-            let len=fs::metadata(&path).map_err(|e|e.to_string())?.len();
-            if len > limit as u64 { return Err("Selected file exceeds allowed size".into()); }
-            let bytes=fs::read(&path).map_err(|e|e.to_string())?;
-            if bytes.len() > limit { return Err("Selected file exceeds allowed size".into()); }
-            let filename = path.file_name().and_then(|x|x.to_str())
-                .ok_or_else(||"Selected file has no valid Unicode name".to_string())?.to_string();
-            cards.push(OpenedCard{
-                filename,source_path:path.to_string_lossy().into_owned(),bytes
-            });
+            cards.push(read_selected_path(path)?);
         }
         Ok(cards)
     }).await.map_err(|e|e.to_string())?
+}
+
+
+/** Pure disk read boundary; invoked only after a user-chosen native picker path. */
+fn read_selected_path(path:PathBuf)->Result<OpenedCard,String>{
+    let ext=path.extension().and_then(|x|x.to_str()).unwrap_or("").to_ascii_lowercase();
+    let limit=if ext=="json"{MAX_JSON}else{MAX_BINARY};
+    let len=fs::metadata(&path).map_err(|e|e.to_string())?.len();
+    if len>limit as u64{return Err("Selected file exceeds allowed size".into());}
+    let bytes=fs::read(&path).map_err(|e|e.to_string())?;
+    if bytes.len()>limit{return Err("Selected file exceeds allowed size".into());}
+    let filename=path.file_name().and_then(|x|x.to_str())
+        .ok_or_else(||"Selected file has no valid Unicode name".to_string())?.to_string();
+    Ok(OpenedCard{filename,source_path:path.to_string_lossy().into_owned(),bytes})
 }
 
 /// Opens a native Save As dialog and publishes to a newly created path only.
@@ -80,6 +84,29 @@ fn validate_save_request(name:&str,kind:&str,size:usize)->Result<(),String>{
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn native_disk_read_preserves_raw_bytes_and_name(){
+        let dir=std::env::temp_dir().join(format!("wc-pro-native-read-{}",std::process::id()));
+        fs::create_dir_all(&dir).unwrap();
+        let path=dir.join("synthetic.wc7");
+        let mut raw=vec![0u8;264];raw[0xd0]=50;raw[0x107]=0xa5;
+        fs::write(&path,&raw).unwrap();
+        let read=read_selected_path(path.clone()).unwrap();
+        assert_eq!(read.filename,"synthetic.wc7");
+        assert_eq!(read.bytes,raw);
+        assert_eq!(read.source_path,path.to_string_lossy());
+        let _=fs::remove_dir_all(dir);
+    }
+    #[test]
+    fn rejects_oversized_json_before_loading_into_memory(){
+        let dir=std::env::temp_dir().join(format!("wc-pro-native-limit-{}",std::process::id()));
+        fs::create_dir_all(&dir).unwrap();
+        let path=dir.join("too_big.json");
+        let file=fs::File::create(&path).unwrap();
+        file.set_len((MAX_JSON+1) as u64).unwrap();
+        assert!(read_selected_path(path).is_err());
+        let _=fs::remove_dir_all(dir);
+    }
     #[test]
     fn command_rejects_traversal_or_oversize_before_dialog(){
         assert!(validate_save_request("../evil.wc6","wc",264).is_err());
