@@ -53,6 +53,18 @@ jobs:
       - name: NSIS installed application launch smoke
         shell: pwsh
         run: ./scripts/windows_installed_smoke.ps1
+      # A runner may be headless: diagnostic-only until GUI automation is proven reliable.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install Windows native UI automation
+        run: python -m pip install pywinauto==0.6.9
+      - name: Installed app native Open/Save dialog E2E (best effort)
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          $path = Get-Content -LiteralPath (Join-Path $env:RUNNER_TEMP "wondercard-installed-exe.txt") -Raw
+          python scripts/windows_native_dialog_smoke.py --exe $path.Trim()
       - uses: actions/upload-artifact@v4
         if: success()
         with:

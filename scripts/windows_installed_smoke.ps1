@@ -32,6 +32,7 @@ if ($installed.Count -eq 0) {
 if ($installed.Count -eq 0) { throw "Installer exited successfully but installed executable was not found" }
 $installedExe = $installed[0].FullName
 Write-Output ("Installed executable found: " + $installedExe)
+Set-Content -LiteralPath (Join-Path $env:RUNNER_TEMP "wondercard-installed-exe.txt") -Value $installedExe -Encoding UTF8
 $process = Start-Process -FilePath $installedExe -PassThru -ErrorAction Stop
 try {
   Start-Sleep -Seconds 7
