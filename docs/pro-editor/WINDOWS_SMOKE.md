@@ -7,7 +7,7 @@
 
 ## 1. 安装与环境
 
-- 使用 GitHub Actions [Pro Editor checks](https://github.com/969981/WonderCard_Toolkit/actions) 最新完成的 Windows artifact `wondercard-pro-editor-windows-alpha`。
+- 使用 GitHub Actions [Pro Editor checks](https://github.com/969981/WonderCard_Toolkit/actions) 已完成的 Windows artifact `wondercard-pro-editor-windows-alpha`。
 - Windows 10/11 x64，WebView2 可用，无管理员权限用户也能启动。
 - 安装包当前未签名，测试前确认来自本仓库 GitHub Actions 的构建与 SHA；不要用官方活动卡的唯一副本。
 - 离线情况下启动，确保不会强制请求 CDN 或外部服务器；检查旧版 `web/standalone.html` 仍可运行。

@@ -9,7 +9,7 @@
 - `apps/studio/src/components/HexPane.tsx`：双击可编辑已验证写入区的单字节（十六进制两位）。无任意未知字节 RAW 模式；不支持多字节批量选择/大型数据虚拟化。
 - `apps/studio/src/components/JsonPane.tsx`：本地 Monaco JSON v2 文本编辑视图与“应用 JSON 修改”入口。编辑后必须通过 JSON 基线及字段校验，不能直接覆盖原始 buffer。
 - `apps/studio/src/lib/storage.ts`：WC 与 JSON v2 文件选择/拖拽导入和另存为；取消保存不会报告成功；不覆盖现有文件。仍未实现生产级原子提交或崩溃回滚。
-- `apps/studio/src/i18n.ts`：67 个主要 UI、字段及提示键，简中/繁中/英文/日文各一套；语言切换不改变文件字节。部分低层异常消息仍需完整本地化。
+- `apps/studio/src/i18n.ts`：78 个主要 UI、字段及提示键，简中/繁中/英文/日文各一套；语言切换不改变文件字节。常见安全校验错误已本地化；极少数第三方/系统原始诊断仍可能显示英文。
 - `web/` v0.3 与 `wondercard/core.py` 旧版保持原状。
 
 ## 自动化测试证据
@@ -20,9 +20,9 @@
 - HEX 仅允许白名单字段与非法日期保护；新旧 Undo/Redo：`apps/studio/src/lib/wondercard.test.ts`。
 - 四语言 key 与动态占位符测试：`apps/studio/src/i18n.test.ts`。
 - **已确认 CI：23 个 Vitest 测试通过、TypeScript typecheck 通过、Vite production build 通过**，见 [Pro Editor run #43355656454](https://github.com/969981/WonderCard_Toolkit/actions/runs/43355656454)。
-- **Windows Edge 浏览器 E2E：已通过**。自动打开合成 WC6、修改并下载二进制、导出/重导入 JSON v2、切换四语言、校验 Full 只读；证据 [Pro Editor run #43357069598](https://github.com/969981/WonderCard_Toolkit/actions/runs/43357069598) 的 `windows-web-e2e` job。**这不是 Tauri 原生 Dialog/FS 交互测试。**
+- **Windows Edge 浏览器 E2E：已通过**。自动打开合成 WC6、修改并下载二进制、导出/重导入 JSON v2、切换四语言、校验 Full 只读；证据 [#43357069598](https://github.com/969981/WonderCard_Toolkit/actions/runs/43357069598) 和 [#43357759029](https://github.com/969981/WonderCard_Toolkit/actions/runs/43357759029) 的 `windows-web-e2e` job。**这不是 Tauri 原生 Dialog/FS 交互测试。**
 - **Tauri 原生 EXE 启动 canary：已通过**。此前 [run #43356012688](https://github.com/969981/WonderCard_Toolkit/actions/runs/43356012688) 的 `Windows native launch smoke` 阶段成功，Windows 上程序持续存活 6 秒；此项仅证明进程能够启动，不等于实际打开与保存成功。
-- 历史 Windows Tauri 2 NSIS 构建曾成功并上传 installer artifact，证据 [#43346556664](https://github.com/969981/WonderCard_Toolkit/actions/runs/43346556664)。本次新增代码的 Windows 安装包要看最新 CI。
+- **Windows Tauri 2 NSIS 构建与安装包产物：已通过**，证据 [#43357069598](https://github.com/969981/WonderCard_Toolkit/actions/runs/43357069598)，artifact `wondercard-pro-editor-windows-alpha`，约 5.13 MB（artifact ID 14006841447）。后续语言诊断文案的 Windows 构建仍以对应最新 CI 结果为准。
 
 ## 未完成的重要关口
 
@@ -30,7 +30,7 @@
 2. **真实文件与游戏复核**：目前仅 4 个合成跨语言向量；真实配信的完整字段、Checksum/CRC、游戏端可用性均未完成验证。
 3. **JSON 多格式支持**：已覆盖当前 WC6/WC7 与 Full 原样往返，尚未实施 Gen4/5/8/9 的独立格式 adapter。
 4. **HEX 专业高级功能**：多字节写入、未知区受控 RAW 专家模式、可撤销批量字节操作、虚拟化、完整字段区间映射仍未开发。
-5. **四语收尾**：部分错误堆栈/低层诊断消息、本地化辅助提示以及 Windows 原生对话框由 OS 决定的语言，仍需 UX 审核。
+5. **四语收尾**：第三方异常堆栈、本地化辅助提示以及 Windows 原生对话框由 OS 决定的语言，仍需 UX 审核。
 6. **文件事务保护**：当前写盘采用对话框返回路径后检查再写，目标路径被并发创建时存在 TOCTOU 风险；尚非原子保存与回滚。
 
 ## 安全和授权边界
