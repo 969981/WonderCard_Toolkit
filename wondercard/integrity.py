@@ -79,3 +79,20 @@ def inspect_card_checksum(data: bytes, fmt: str) -> IntegrityCheck | None:
         computed = crc16_ccitt_false(data, zero_at=offset)
         method = f'CRC16-CCITT-FALSE candidate, full buffer with 0x{offset:X} zeroed; ' + evidence
     return IntegrityCheck(stored, computed, stored == computed, method)
+
+
+# Experimental L4, restricted to formats cross-checked against independent real
+# EventsGallery item and Pokemon samples. Never implies game compatibility.
+EXPERIMENTAL_FULL_CRC_FORMATS = frozenset(('wc8','wc9','wa9'))
+
+
+def update_full_card_checksum(buffer: bytearray, fmt: str) -> int:
+    if fmt not in EXPERIMENTAL_FULL_CRC_FORMATS:
+        raise ValueError(f'{fmt}: modified binary checksum repair is not enabled')
+    offsets = {'wc8':(0x2D0,0x2CC),'wc9':(0x2C8,0x2C4),'wa9':(0x2C8,0x2C0)}
+    size,offset=offsets[fmt]
+    if len(buffer)!=size:
+        raise ValueError(f'{fmt} must be exactly {size} bytes')
+    checksum=crc16_ccitt_false(buffer,zero_at=offset)
+    pack_into('<H',buffer,offset,checksum)
+    return checksum
