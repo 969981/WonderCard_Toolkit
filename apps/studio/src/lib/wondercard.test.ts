@@ -79,7 +79,7 @@ describe("raw byte invariants",()=>{
   });
   it("blocks HEX edits that create an invalid raw date",()=>{
     const doc=createDocument("date.wc6",sample("wc6"));
-    expect(()=>editByte(doc,0x4c,0xff)).toThrow();
+    expect(()=>editByte(doc,0x4c,0x00)).toThrow();
   });
   it("rejects out-of-range value and readonly fields",()=>{
     const doc=createDocument("test.wc6",sample("wc6"));
