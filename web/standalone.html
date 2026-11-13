@@ -1,0 +1,555 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>WonderCard Studio · 配信卡编辑器</title>
+  <style>
+[hidden]{display:none!important}
+:root{--bg:#0d111e;--sidebar:#111726;--panel:#171d2e;--panel2:#1c2538;--line:#30384c;--text:#e7ebf7;--muted:#8492af;--brand:#6e87ff;--brand2:#9da9ff;--accent:#68c9b8;--danger:#ff8897;--input:#11182a;--shadow:0 12px 28px rgba(0,0,0,.15)}
+*{box-sizing:border-box}html,body{margin:0;height:100%;font-family:Inter,"Segoe UI","Microsoft YaHei UI","Noto Sans CJK SC",sans-serif;color:var(--text);background:var(--bg);font-size:14px}button,input,select{font:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--brand2);outline-offset:1px}h1,h2,h3,p{margin-top:0}h3{font-size:15px;margin-bottom:0}h1{letter-spacing:-.6px;font-size:26px;margin:7px 0 6px}p{color:var(--muted);line-height:1.5}a{color:inherit;text-decoration:none}.app{display:grid;grid-template-columns:248px minmax(0,1fr);height:100vh;min-height:600px}.sidebar{background:var(--sidebar);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:25px 15px 15px;min-height:0}.brand{display:flex;align-items:center;gap:11px;padding:2px 8px 30px;font-size:18px;letter-spacing:-.3px}.brand small{display:block;font-size:10px;letter-spacing:1.7px;color:var(--muted);margin-top:5px}.brand-icon{height:37px;width:37px;border-radius:12px;background:linear-gradient(145deg,#5169dc,#8a8fff);font-weight:800;display:grid;place-items:center;color:#fff;box-shadow:0 5px 20px #596dca55}.side-heading{font-size:11px;text-transform:uppercase;font-weight:700;letter-spacing:1.5px;color:#bbc5dc;padding:0 8px;margin-bottom:14px;display:flex;justify-content:space-between}.muted{color:var(--muted);font-size:10px;font-weight:500}.primary{border:1px solid #7085ed;background:linear-gradient(110deg,#667bea,#778cf7);color:#fff;font-weight:650}.full{height:41px;border-radius:9px;width:100%;text-align:center}.ico{font-size:19px;margin-right:5px}.folder-meta{display:flex;justify-content:space-between;padding:23px 8px 11px;color:var(--muted);font-size:12px}.text-btn{border:0;background:transparent;color:var(--muted);font-size:12px}.text-btn:hover{color:var(--text)}.search{height:38px;border-radius:8px;border:1px solid var(--line);background:var(--input);color:var(--text);width:100%;padding:0 10px;font-size:12px}.file-list{overflow:auto;flex:1;margin:12px -4px 0;padding:0 4px}.file-entry{width:100%;background:transparent;border:1px solid transparent;color:var(--text);border-radius:10px;display:flex;align-items:center;gap:10px;text-align:left;padding:11px 8px;margin:3px 0}.file-entry:hover{background:var(--panel2)}.file-entry.selected{background:#273153;border-color:#404f87}.file-symbol{background:#303b5f;color:#b8c4ff;border-radius:9px;min-width:35px;height:35px;display:grid;place-items:center;font-weight:750;font-size:11px}.file-info{min-width:0;flex:1}.file-info strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;font-weight:650}.file-info small{display:block;color:var(--muted);margin-top:5px;font-size:11px}.side-bottom{border-top:1px solid var(--line);padding:17px 9px 2px}.privacy{font-weight:650;font-size:12px}.online,.status-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#65ccb4;margin-right:8px;box-shadow:0 0 9px #65ccb477}.side-bottom p{font-size:11px;margin:8px 0 14px}.hint-link{letter-spacing:2px;font-size:10px;color:#788ab6}.main{min-width:0;overflow:auto}.topbar{height:68px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;padding:0 32px;background:var(--bg);position:sticky;top:0;z-index:3}.breadcrumbs{color:var(--muted);font-size:12px}.breadcrumbs span{padding:0 10px;color:#48546c}.breadcrumbs b{font-weight:600;color:var(--text)}.top-actions{display:flex;align-items:center;gap:11px}.btn{border-radius:8px;height:36px;padding:0 15px;border:1px solid var(--line);color:var(--text);background:var(--panel);font-size:12px;font-weight:650}.btn:hover,.full:hover{filter:brightness(1.10)}.btn.primary{background:linear-gradient(110deg,#667bea,#778cf7);color:#fff;border-color:#788cf3}.btn.outline{background:transparent;border-color:#4b5876}.btn.subtle{background:var(--panel)}button:disabled{opacity:.35;cursor:not-allowed}.icon-button{background:transparent;border:0;color:var(--muted);font-size:24px}.top-divider{height:24px;width:1px;background:var(--line);margin-right:4px}.workspace{padding:30px 32px 50px;max-width:1640px;margin:auto}.work-head{display:flex;align-items:end;justify-content:space-between;gap:14px;margin-bottom:23px}.work-head p{margin:0;font-size:12px}.eyebrow{font-size:10px;letter-spacing:2px;color:#92a6ff;font-weight:700}.version{font-size:10px;vertical-align:middle;letter-spacing:1.1px;background:#2b3555;padding:5px 7px;border-radius:5px;color:#afbeff;margin-left:5px}.editor-layout{display:grid;grid-template-columns:minmax(450px,1fr) 332px;align-items:start;gap:20px}.editor-center{min-width:0}.card-hero{display:grid;grid-template-columns:186px minmax(0,1fr);background:var(--panel);border:1px solid var(--line);border-radius:13px;overflow:hidden;min-height:215px;box-shadow:var(--shadow)}.hero-mark{background:radial-gradient(circle at 55% 36%,#3b4f83,#172341 73%);display:flex;align-items:center;flex-direction:column;justify-content:center;gap:8px;overflow:hidden;position:relative}.hero-mark:before{content:"";position:absolute;inset:0;background:linear-gradient(140deg,transparent 48%,#9aa7ff0b 50%,transparent 52%),linear-gradient(35deg,transparent 38%,#9aa7ff0c 40%,transparent 43%)}.ball-circle{width:108px;height:108px;border:5px solid #a9b8ee77;border-radius:50%;position:relative;display:grid;place-items:center;background:linear-gradient(#667ab5 50%,#283956 50%);transform:rotate(-12deg);box-shadow:0 10px 35px #11182da8}.ball-bar{position:absolute;top:45%;height:11px;width:100%;background:#c1c9e4;border:1px solid #8395d8}.ball-center{position:absolute;z-index:1;height:31px;width:31px;background:#9aa9d7;border:7px solid #c9d1e7;border-radius:50%;box-shadow:0 0 1px 2px #516289}.hero-kicker{position:relative;color:#d4defe;font-size:9px;letter-spacing:1.1px;font-weight:800}.hero-sub{font-size:8px;letter-spacing:1.6px;color:#8da0cb}.hero-main{padding:25px 26px}.hero-label{display:flex;gap:6px;flex-wrap:wrap}.pill{font-size:10px;font-weight:750;padding:5px 8px;border-radius:5px;background:#30394d;color:#bec8e0;letter-spacing:.5px}.pill.active{background:#314479;color:#b4c4ff}.pill.changed{background:#5b3340;color:#ffb8c3}.hero-main h2{font-size:21px;line-height:1.45;margin:16px 0 5px;overflow-wrap:anywhere}.hero-main>p{font-size:11px;margin-bottom:19px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.hero-facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid var(--line);padding-top:15px;gap:12px}.hero-facts span{display:block;font-size:10px;color:var(--muted);margin-bottom:6px}.hero-facts b{font-size:13px;font-weight:700}.tabs{display:flex;border-bottom:1px solid var(--line);margin:21px 0 20px;gap:25px}.tab{background:none;color:var(--muted);border:0;border-bottom:2px solid transparent;padding:0 0 14px;font-size:12px;font-weight:650}.tab:hover{color:var(--text)}.tab.active{border-color:var(--brand);color:#b4c5ff}.tab-panel{min-height:100px}.section-head{display:flex;justify-content:space-between;align-items:center;margin:21px 0 13px}.section-head span{font-size:10px;letter-spacing:1.3px;color:#7b8aaa}.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.form-group{background:var(--panel);padding:12px 14px;border:1px solid var(--line);border-radius:9px;min-width:0}.form-group.focused{border-color:#6f81d0}.form-top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:7px}.field-label{font-size:11px;color:#adb9d0;font-weight:650}.field-offset{font-size:10px;font-family:Consolas,monospace;color:#697d9f}.field-input{width:100%;background:var(--input);color:var(--text);border:1px solid #39445c;border-radius:6px;height:34px;padding:0 10px;font-size:13px;min-width:0}.field-input:disabled{opacity:.55}.field-note{color:var(--muted);font-size:10px;margin-top:6px;line-height:1.4}.field-changed{border-color:#a96a7b}.field-changed .field-offset{color:var(--danger)}.wide{grid-column:1/-1}.warning{margin:12px 0;color:#f9bb88;border:1px solid #704c39;background:#392a26;padding:12px;border-radius:8px;font-size:12px}.tip{font-size:12px}.json-pre{border-radius:10px;border:1px solid var(--line);background:#0d1220;padding:16px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px;line-height:1.6;color:#bdd5ee;max-height:650px;overflow:auto}.inspector{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;position:sticky;top:91px}.inspector-head{display:flex;justify-content:space-between;padding:21px 17px 16px;align-items:center}.inspector-kicker{font-size:9px;color:var(--muted);letter-spacing:1.7px;font-weight:750}.inspector h3{margin-top:7px;font-size:15px}.hex-count{background:#353047;color:#fac0c9;padding:5px 7px;border-radius:6px;font-size:10px;font-weight:700}.inspector-nav{display:grid;grid-template-columns:1fr 1fr;padding:0 15px;gap:7px}.inspector-nav button{background:transparent;border:0;border-bottom:2px solid transparent;color:var(--muted);text-align:center;padding:10px;font-size:10px;letter-spacing:.9px;font-weight:700}.inspector-nav button.active{border-color:var(--brand);color:var(--text)}.hex-view{height:505px;overflow:auto;background:#111827;padding:13px 8px 13px 13px;border-top:1px solid var(--line);font:10px/21px Consolas,"Cascadia Code",monospace;white-space:nowrap}.hex-line{display:flex;align-items:center;height:21px;gap:5px}.hex-addr{color:#687b9a;min-width:41px}.hex-bytes{display:grid;grid-template-columns:repeat(8,1fr);gap:2px}.hex-byte{font:10px Consolas,monospace;width:25px;padding:3px 0;color:#a7b9d7;background:transparent;border:0;border-radius:3px}.hex-byte:hover{background:#343e5e}.hex-byte.changed{color:#ffe1e6;background:#7e3e4d}.hex-byte.selected{outline:1px solid #9baeff}.hex-ascii{font:10px Consolas,monospace;color:#687791;letter-spacing:.6px;display:none}.diff-view{height:505px;overflow:auto;padding:16px;background:#111827;border-top:1px solid var(--line)}.diff-item{padding:11px 8px;border-bottom:1px solid #303648;font:11px Consolas,monospace}.diff-item b{color:#9fb2ff}.diff-item .from{color:#ff9cac}.diff-item .to{color:#7ee4b7}.inspector-footer{padding:14px 16px;border-top:1px solid var(--line);font-size:11px;color:#c7d5de}.inspector-footer p{font-size:10px;margin:7px 0 0}.audit-list,.diff-list{border:1px solid var(--line);background:var(--panel);border-radius:10px;overflow:hidden}.audit-row,.diff-row{display:flex;justify-content:space-between;padding:13px 15px;border-bottom:1px solid var(--line);gap:20px;font-size:12px}.audit-row:last-child,.diff-row:last-child{border-bottom:0}.audit-row span:first-child{color:var(--muted)}.audit-row strong{font-weight:650;text-align:right;overflow-wrap:anywhere}.ok{color:var(--accent)}.warn{color:#f1bd85}.empty-state{text-align:center;border:1px dashed var(--line);background:var(--panel);padding:55px;border-radius:12px}.empty-icon{font-size:40px;color:var(--brand)}.drop-indicator{display:none;padding:25px;text-align:center;background:#2c3866;color:white;border:2px dashed var(--brand2);border-radius:10px;margin-bottom:15px}.dragging .drop-indicator{display:block}.toast{display:none;border-radius:8px;margin-bottom:15px;padding:12px 15px;border:1px solid #547e72;color:#c1f7e5;background:#243b3b;font-size:12px}.toast.error{border-color:#855665;background:#442933;color:#ffd2d8}.toast.show{display:block}.no-results{font-size:11px;color:var(--muted);padding:17px}.light{--bg:#f3f6fb;--sidebar:#fff;--panel:#fff;--panel2:#f3f5fa;--line:#dae0ee;--text:#1a2440;--muted:#697692;--input:#f8f9fc;--shadow:0 12px 28px #394c6b14}.light .file-entry.selected{background:#edf0ff;border-color:#c8d2ff}.light .field-input{border-color:#d5dceb}.light .hex-view,.light .diff-view,.light .json-pre{background:#f1f3f9;color:#415372}.light .hex-byte{color:#566484}.light .hex-byte.changed{background:#ffe1e6;color:#a23c54}.light .hex-addr,.light .hex-ascii{color:#7b8ba6}.light .hero-mark{color:#fff}.light .pill{background:#eef0fa;color:#5a6995}.light .pill.active{background:#e1e7ff;color:#4a5fb1}.light .pill.changed{background:#ffe7eb;color:#a4485d}.light .version{background:#dce4fc;color:#526ad6}
+@media(max-width:1280px){.app{grid-template-columns:220px minmax(0,1fr)}.sidebar{padding-left:12px;padding-right:12px}.workspace{padding:22px}.topbar{padding:0 22px}.editor-layout{grid-template-columns:minmax(400px,1fr) 287px;gap:13px}.card-hero{grid-template-columns:147px 1fr}.hero-main{padding:18px}.hex-byte{width:21px}}@media(max-width:960px){.app{grid-template-columns:190px minmax(0,1fr)}.editor-layout{grid-template-columns:1fr}.inspector{position:static}.hex-view,.diff-view{height:300px}.card-hero{grid-template-columns:170px 1fr}.work-head{align-items:start;flex-direction:column}}@media(max-width:650px){.app{display:block;height:auto}.sidebar{min-height:0;padding:12px}.brand{padding-bottom:15px}.side-heading,.file-list,.folder-meta,.search,.side-bottom{display:none}.main{overflow:visible}.topbar{padding:10px 15px;height:auto}.breadcrumbs{display:none}.workspace{padding:15px}.work-head h1{font-size:21px}.work-head p{font-size:11px}.card-hero{grid-template-columns:1fr}.hero-mark{display:none}.form-grid{grid-template-columns:1fr}.tabs{gap:12px}.hero-main{padding:15px}.top-actions{gap:5px}.btn{padding:0 8px;font-size:11px}}
+
+/* Locale switcher, readable in both color modes. */
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.language-control select{background:var(--input);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:7px 8px;font-size:12px;max-width:110px}
+@media(max-width:650px){.language-control select{max-width:94px;padding:6px 3px}.top-actions{width:100%;justify-content:flex-end}}
+
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <a class="brand" href="#" aria-label="WonderCard Studio">
+      <span class="brand-icon">W</span>
+      <span><strong>WonderCard</strong><small>STUDIO / v0.2</small></span>
+    </a>
+    <div class="side-heading"><span data-i18n="side.workspace">工作区</span> <span class="muted">LOCAL ONLY</span></div>
+    <button id="open-files-left" class="primary full"><span class="ico">＋</span> <span data-i18n="side.import">导入配信卡</span></button>
+    <div class="folder-meta"><span id="file-count">0 个文件</span><button id="clear-files" class="text-btn" data-i18n-title="side.clear" title="清除文件列表"><span data-i18n="side.clear">清空</span></button></div>
+    <input id="search" class="search" data-i18n-placeholder="search.placeholder" placeholder="⌕ 搜索卡片 / ID / 文件名" autocomplete="off">
+    <div id="file-list" class="file-list" role="listbox" data-i18n-aria-label="top.library" aria-label="配信卡文件列表"></div>
+    <div class="side-bottom">
+      <div class="privacy"><span class="online"></span> <span data-i18n="side.local">本地离线运行</span></div>
+      <p data-i18n="side.privacy">文件仅在当前浏览器中处理，不上传到服务器。</p>
+      <div class="hint-link">WC6 · WC7 · FULL</div>
+    </div>
+  </aside>
+  <main class="main">
+    <div class="topbar">
+      <div class="breadcrumbs"><span data-i18n="top.library">文件库</span><span> / </span> <b data-i18n="top.workspace">配信卡工作台</b></div>
+      <div class="top-actions">
+        <label class="language-control"><span class="sr-only" data-i18n="top.language">界面语言</span><select id="locale-switch" data-i18n-aria-label="top.language" aria-label="Interface language"><option value="zh-CN">简体中文</option><option value="zh-TW">繁體中文</option><option value="en">English</option><option value="ja">日本語</option></select></label><button id="theme-switch" class="icon-button" data-i18n-title="top.theme" title="切换深浅色模式">☼</button>
+        <span class="top-divider"></span>
+        <button id="export-json" class="btn subtle" data-i18n="top.json">导出 JSON</button>
+        <button id="export-bin" class="btn primary"><span aria-hidden="true">↧ </span><span data-i18n="top.binary">导出 WC 文件</span></button>
+      </div>
+    </div>
+    <div class="workspace">
+      <div class="work-head">
+        <div><div class="eyebrow">MYSTERY GIFT RESEARCH WORKSPACE</div><h1><span data-i18n="app.title">配信卡编辑器</span> <span class="version">BETA 0.2</span></h1><p data-i18n="workspace.description">查看、编辑和审计第六 / 第七世代 Wonder Card。保留未知字节，非破坏性写回。</p></div>
+        <button id="audit-csv" class="btn outline"><span aria-hidden="true">⇩ </span><span data-i18n="workspace.auditCsv">导出批量审计 CSV</span></button>
+      </div>
+      <div id="toast" class="toast" role="status" aria-live="polite"></div>
+      <div id="drop-indicator" class="drop-indicator" data-i18n="drop.label">将 .wc6 / .wc7 / .wc6full / .wc7full 或 JSON 文件拖放到此处</div>
+      <div id="empty-state" hidden class="empty-state"><div class="empty-icon">▧</div><h2 data-i18n="empty.heading">导入你的第一张配信卡</h2><p data-i18n="empty.description">支持一次选择多个文件。也可以直接拖放文件到窗口中。</p><button id="open-files-empty" class="btn primary" data-i18n="empty.open">选择文件</button></div>
+      <div id="editor" class="editor-layout">
+        <section class="editor-center">
+          <div class="card-hero">
+            <div class="hero-mark"><div class="ball-circle"><div class="ball-bar"></div><div class="ball-center"></div></div><div class="hero-kicker">WONDER CARD · <span id="hero-gen">GEN VI</span></div><div class="hero-sub" data-i18n="hero.gift">MYSTERY GIFT DISTRIBUTION</div></div>
+            <div class="hero-main"><div class="hero-label"><span class="pill active" id="hero-format">WC6</span><span class="pill" id="hero-kind">POKÉMON</span><span id="dirty-pill" class="pill changed" hidden>● <span data-i18n="hero.changed">已修改</span></span></div><h2 id="card-title">配信卡</h2><p id="card-subtitle">—</p><div class="hero-facts"><div><span data-i18n="hero.id">卡片编号</span><b id="hero-id">—</b></div><div><span data-i18n="hero.date">接收日期</span><b id="hero-date">—</b></div><div><span data-i18n="hero.size">文件长度</span><b id="hero-size">—</b></div></div></div>
+          </div>
+          <nav id="editor-tabs" class="tabs" aria-label="编辑器选项卡"><button class="tab active" data-tab="fields">✎ <span data-i18n="tab.fields">字段编辑</span></button><button class="tab" data-tab="json">⌘ <span data-i18n="tab.json">JSON 数据</span></button><button class="tab" data-tab="audit">▤ <span data-i18n="tab.audit">审计与验证</span></button></nav>
+          <section id="fields-tab" class="tab-panel">
+            <div class="section-head"><h3 data-i18n="section.header">基础信息</h3><span>卡片头部 · HEADER</span></div><div id="fields-header" class="form-grid"></div>
+            <div id="pokemon-section"><div class="section-head"><h3 data-i18n="section.pokemon">宝可梦设定</h3><span>POKÉMON TEMPLATE</span></div><div id="fields-pokemon" class="form-grid"></div></div>
+            <div id="item-section" hidden><div class="section-head"><h3 data-i18n="section.item">道具设定</h3><span>ITEM GIFT</span></div><div id="fields-item" class="form-grid"></div></div>
+            <div id="full-section" hidden><div class="section-head"><h3 data-i18n="section.full">Full 配信控制字段</h3><span>READ-ONLY VALIDATION REQUIRED</span></div><div id="fields-full" class="form-grid"></div><p class="warning" data-i18n="full.warning">Full 格式修改后的 CRC 生成规则尚未经过真实样本外部验证，本工具只允许原样导出 Full。</p></div>
+          </section>
+          <section id="json-tab" class="tab-panel" hidden><div class="section-head"><h3 data-i18n="section.json">结构化 JSON</h3><span>COMPATIBLE WITH TOOLKIT v0.1</span></div><p class="tip" data-i18n="json.tip">下方展示当前字段及基线原始字节。可复制或导出 JSON。修改请在「字段编辑」中进行，避免破坏未解析内容。</p><pre id="json-text" class="json-pre"></pre></section>
+          <section id="audit-tab" class="tab-panel" hidden><div class="section-head"><h3 data-i18n="section.audit">审计与一致性</h3><span>INTEGRITY REPORT</span></div><div id="audit-items" class="audit-list"></div><div class="section-head"><h3 data-i18n="section.history">变更记录</h3><span>BYTE-LEVEL DIFF</span></div><div id="audit-diff" class="diff-list"></div></section>
+        </section>
+        <aside class="inspector">
+          <div class="inspector-head"><div><span class="inspector-kicker">BINARY INSPECTOR</span><h3 data-i18n="inspector.title">十六进制检查器</h3></div><span id="hex-count" class="hex-count">0 改动</span></div>
+          <div class="inspector-nav"><button data-inspector="hex" class="active">HEX VIEW</button><button data-inspector="diff">DIFF VIEW</button></div>
+          <div id="hex-view" class="hex-view"></div><div id="diff-view" class="diff-view" hidden></div>
+          <div class="inspector-footer"><span class="status-dot"></span> <span id="hex-validation">字节保真 · 待检查</span><p data-i18n="inspector.red">红色高亮 = 修改字节 · 点击字节可查看偏移</p></div>
+        </aside>
+      </div>
+    </div>
+  </main>
+</div>
+<input type="file" id="file-input" hidden multiple accept=".wc6,.wc7,.wc6full,.wc7full,.json">
+<script>
+/* Generated from wondercard/core.py FieldSpec definitions. */
+window.WC_MANIFEST = {"header":{"card_id":{"offset":0,"kind":"u16","size":0},"title":{"offset":2,"kind":"string","size":74},"date":{"offset":76,"kind":"date","size":0},"card_location":{"offset":80,"kind":"u8","size":0},"card_type":{"offset":81,"kind":"u8","size":0},"status_flags":{"offset":82,"kind":"u8","size":0},"card_color":{"offset":83,"kind":"u8","size":0}},"pokemon":{"tid":{"offset":104,"kind":"u16","size":0},"sid":{"offset":106,"kind":"u16","size":0},"origin_game":{"offset":108,"kind":"u8","size":0},"encryption_constant":{"offset":112,"kind":"u32","size":0},"ball":{"offset":118,"kind":"u8","size":0},"held_item":{"offset":120,"kind":"u16","size":0},"move_1":{"offset":122,"kind":"u16","size":0},"move_2":{"offset":124,"kind":"u16","size":0},"move_3":{"offset":126,"kind":"u16","size":0},"move_4":{"offset":128,"kind":"u16","size":0},"species":{"offset":130,"kind":"u16","size":0},"form":{"offset":132,"kind":"u8","size":0},"language":{"offset":133,"kind":"u8","size":0},"nickname":{"offset":134,"kind":"string","size":26},"nature":{"offset":160,"kind":"u8","size":0},"gender":{"offset":161,"kind":"u8","size":0},"ability_mode":{"offset":162,"kind":"u8","size":0},"pid_type":{"offset":163,"kind":"u8","size":0},"egg_location":{"offset":164,"kind":"u16","size":0},"met_location":{"offset":166,"kind":"u16","size":0},"met_level":{"offset":168,"kind":"u8","size":0},"iv_hp":{"offset":175,"kind":"u8","size":0},"iv_atk":{"offset":176,"kind":"u8","size":0},"iv_def":{"offset":177,"kind":"u8","size":0},"iv_spe":{"offset":178,"kind":"u8","size":0},"iv_spa":{"offset":179,"kind":"u8","size":0},"iv_spd":{"offset":180,"kind":"u8","size":0},"ot_gender":{"offset":181,"kind":"u8","size":0},"ot_name":{"offset":182,"kind":"string","size":26},"level":{"offset":208,"kind":"u8","size":0},"is_egg":{"offset":209,"kind":"u8","size":0},"pid":{"offset":212,"kind":"u32","size":0},"relearn_move_1":{"offset":216,"kind":"u16","size":0},"relearn_move_2":{"offset":218,"kind":"u16","size":0},"relearn_move_3":{"offset":220,"kind":"u16","size":0},"relearn_move_4":{"offset":222,"kind":"u16","size":0},"memory_intensity":{"offset":224,"kind":"u8","size":0},"memory_id":{"offset":225,"kind":"u8","size":0},"memory_variable":{"offset":226,"kind":"u16","size":0},"memory_feeling":{"offset":228,"kind":"u8","size":0},"ev_hp":{"offset":229,"kind":"u8","size":0},"ev_atk":{"offset":230,"kind":"u8","size":0},"ev_def":{"offset":231,"kind":"u8","size":0},"ev_spe":{"offset":232,"kind":"u8","size":0},"ev_spa":{"offset":233,"kind":"u8","size":0},"ev_spd":{"offset":234,"kind":"u8","size":0}},"item":{"item_id":{"offset":104,"kind":"u16","size":0},"quantity":{"offset":106,"kind":"u16","size":0}},"full":{"allowed_games_mask":{"offset":0,"kind":"u32","size":0},"distribution_effect":{"offset":510,"kind":"u8","size":0},"allowed_language":{"offset":511,"kind":"u8","size":0},"distribution_mode":{"offset":512,"kind":"u8","size":0},"sub_id":{"offset":513,"kind":"u8","size":0},"set_count":{"offset":516,"kind":"u8","size":0},"rarity_or_marker":{"offset":517,"kind":"u8","size":0}}};
+window.WC_SAMPLE_B64 = "DydTAFkATgBUAEgARQBUAEkAQwAgAEQARQBNAE8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAC14MwEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP8DAAEAAAAAAAAAAAAAAP///////wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
+</script><script>
+/* Offline i18n module. Translation is presentation-only; WC data/JSON are untouched. */
+(() => {
+  'use strict';
+  const catalog = {
+    'zh-CN': {
+      'app.title':'配信卡编辑器','side.workspace':'工作区','side.import':'导入配信卡','side.clear':'清空','side.local':'本地离线运行','side.privacy':'文件仅在当前浏览器中处理，不上传到服务器。',
+      'top.library':'文件库','top.workspace':'配信卡工作台','top.json':'导出 JSON','top.binary':'导出 WC 文件','top.theme':'切换深浅色模式','top.language':'界面语言',
+      'workspace.description':'查看、编辑和审计第六 / 第七世代 Wonder Card。保留未知字节，非破坏性写回。','workspace.auditCsv':'导出批量审计 CSV',
+      'drop.label':'将 .wc6 / .wc7 / .wc6full / .wc7full 或 JSON 文件拖放到此处','empty.heading':'导入你的第一张配信卡','empty.description':'支持一次选择多个文件。也可以直接拖放文件到窗口中。','empty.open':'选择文件',
+      'hero.changed':'已修改','hero.id':'卡片编号','hero.date':'接收日期','hero.size':'文件长度','hero.gift':'神秘礼物配信',
+      'tab.fields':'字段编辑','tab.json':'JSON 数据','tab.audit':'审计与验证','section.header':'基础信息','section.pokemon':'宝可梦设定','section.item':'道具设定','section.full':'Full 配信控制字段','section.json':'结构化 JSON','section.audit':'审计与一致性','section.history':'变更记录',
+      'full.warning':'Full 格式修改后的 CRC 生成规则尚未经过真实样本外部验证，本工具只允许原样导出 Full。',
+      'json.tip':'下方展示当前字段及基线原始字节。可复制或导出 JSON。修改请在「字段编辑」中进行，避免破坏未解析内容。',
+      'inspector.title':'十六进制检查器','inspector.red':'红色高亮 = 修改字节 · 点击字节可查看偏移','search.placeholder':'⌕ 搜索卡片 / ID / 文件名','files.count':'{n} 个文件','files.none':'没有匹配的卡片','files.invalidDate':'无效日期',
+      'kind.pokemon':'宝可梦配信','kind.item':'道具配信','kind.bp':'BP 配信','kind.unknown':'未知类型','card.fallback':'配信卡','hero.unknownDate':'未知 / 未设置','diff.count':'{n} 改动','diff.empty':'未检测到字节修改。原始内容保持不变。',
+      'validation.selected':'已选择 {offset} · {value}','validation.fullLocked':'Full 已修改 · 禁止导出','validation.untouched':'编辑只影响指定字段 · 未知字节保留','files.imported':'成功导入 {n} 个文件',
+      'error.invalidHex':'raw_hex 必须是偶数字符的十六进制字符串','error.unsupported':'不支持的文件扩展名，请提供 .wc6 / .wc7 / .wc6full / .wc7full','error.size':'{format} 应为 {expected} 字节，实际为 {actual} 字节','error.string':'字符串必须合法，且不含空字符','error.longString':'字符串超长：至多 {max} 个 UTF-16 单位','error.date':'日期必须是有效的 YYYY-MM-DD','error.date7':'WC7 日期仅支持 2000–2099','error.positive':'数值必须是非负整数','error.range':'值必须在 0..{max} 范围内','error.unknownField':'未知或不可编辑字段：{field}',
+      'error.integer':'字段「{field}」需要无符号整数','error.fullLocked':'Full 修改后 CRC 尚未验证，禁止导出；请先导出 JSON','error.noFiles':'暂无文件可审计',
+      'toast.exportBin':'已导出 {filename}（{n} 字节差异）','toast.exportJson':'已导出无损 JSON（兼容 v0.1）','toast.exportCsv':'已导出 {n} 张卡片的审计报告','toast.cleared':'文件列表已清空（磁盘原件未改变）','toast.sample':'已加载合成演示卡片，可直接修改日期或导入自己的文件',
+      'audit.format':'文件格式','audit.bytes':'文件字节','audit.reserved':'未知字段 / 保留区','audit.reservedValue':'保持原始数据，不会自动重新序列化','audit.sha':'SHA-256 (原件)','audit.shaUnavailable':'当前浏览器不可用','audit.modifiedFields':'修改的字段数','audit.modifiedBytes':'变化字节数','audit.pid':'来源 / 生成模式','audit.iv':'IV 规则','audit.date':'日期解析','audit.result':'数据审计','audit.full':'Full 写回',
+      'audit.invalidDate':'日期无法解析或为空','audit.unknownPid':'未知 PID 生成模式','audit.highLevel':'等级超过 100','audit.oddIv':'出现非典型 IV 控制值','audit.nonPokemon':'非宝可梦配信','audit.iv3':'3 项保底 31','audit.iv2':'2 项保底 31','audit.ivRaw':'见原始 IV 字节','audit.na':'不适用',
+      'audit.ok':'基础格式检查通过（不代表官方合法性）','audit.fullLocked':'修改后禁止导出：CRC 未验证','audit.fullUnchanged':'未修改时可原样导出','audit.noDiff':'未修改任何字节。',
+      'pid.0':'固定 PID','pid.1':'随机允许闪','pid.2':'强制闪光','pid.3':'禁止闪光','pid.unknown':'未知',
+      'option.card_type.0':'宝可梦','option.card_type.1':'道具','option.card_type.3':'对战点数','option.gender.0':'雄','option.gender.1':'雌','option.gender.2':'无性别','option.gender.3':'随机','option.ability_mode.0':'特性 1','option.ability_mode.1':'特性 2','option.ability_mode.2':'隐藏特性','option.ability_mode.3':'随机普通特性','option.ability_mode.4':'随机全部特性','option.nature.255':'随机',
+      'hint.pid_type':'0 固定 / 1 随机 / 2 强制闪 / 3 禁止闪。改变此项会影响配信生成规则。','hint.date':'WC6 为 YYYYMMDD 整数；WC7 的年份为相对 2000 的编码。','hint.title':'改动后重编码为 UTF-16LE；未编辑的原始字节保持不变。','hint.status_flags':'原始 8 位标志，请结合游戏与 PKHeX 研究。','hint.card_type':'为防止字段结构不一致，首版禁止跨类型修改。','hint.iv_hp':'254 (FE) 常用于保底 3V；253 (FD) 常用于保底 2V；255 为随机。','hint.pid':'当 PID 类型不是固定 PID 时，这个数值未必直接用于最终宝可梦。','hint.met_level':'历史映射字段，实际等级一般以 level 字段为准。',
+      'field.card_id':'卡片 ID','field.title':'卡片标题','field.date':'接收日期','field.card_location':'卡片来源 / Location','field.card_type':'礼物类型','field.status_flags':'状态标志位','field.card_color':'背景色 / 卡片标志','field.tid':'训练家 ID (TID)','field.sid':'秘密 ID (SID)','field.origin_game':'来源游戏','field.encryption_constant':'加密常数 (EC)','field.ball':'精灵球 ID','field.held_item':'携带道具','field.species':'宝可梦图鉴编号','field.form':'形态','field.language':'宝可梦语言','field.nickname':'昵称','field.nature':'性格模式','field.gender':'性别模式','field.ability_mode':'特性模式','field.pid_type':'PID / 闪光模式','field.egg_location':'蛋获得地点','field.met_location':'相遇地点','field.met_level':'旧版等级字段','field.ot_gender':'原训练家性别','field.ot_name':'原训练家名字','field.level':'等级','field.is_egg':'是否为蛋','field.pid':'固定 PID','field.memory_intensity':'Memory 强度','field.memory_id':'Memory ID','field.memory_variable':'Memory 参数','field.memory_feeling':'Memory 感受','field.item_id':'道具 ID','field.quantity':'数量','field.allowed_games_mask':'游戏版本掩码','field.distribution_effect':'动画效果','field.allowed_language':'允许接收的语言','field.distribution_mode':'配信模式','field.sub_id':'Sub ID','field.set_count':'设置数量','field.rarity_or_marker':'标识位','field.move':'技能 {n}','field.relearn_move':'回忆招式 {n}','field.iv':'IV · {stat}','field.ev':'EV · {stat}'
+    },
+    'zh-TW': {
+      'app.title':'配信卡編輯器','side.workspace':'工作區','side.import':'匯入配信卡','side.clear':'清空','side.local':'本機離線執行','side.privacy':'檔案只會在目前瀏覽器中處理，不會上傳伺服器。','top.library':'檔案庫','top.workspace':'配信卡工作台','top.json':'匯出 JSON','top.binary':'匯出 WC 檔案','top.theme':'切換明暗主題','top.language':'介面語言',
+      'workspace.description':'檢視、編輯與稽核第六／第七世代 Wonder Card。保留未知位元組，非破壞性寫回。','workspace.auditCsv':'匯出批次稽核 CSV','drop.label':'將 .wc6 / .wc7 / .wc6full / .wc7full 或 JSON 檔案拖放至此','empty.heading':'匯入第一張配信卡','empty.description':'可一次選取多個檔案，也可以將檔案拖入視窗。','empty.open':'選取檔案','hero.changed':'已修改','hero.id':'卡片編號','hero.date':'接收日期','hero.size':'檔案大小','hero.gift':'神秘禮物配信',
+      'tab.fields':'欄位編輯','tab.json':'JSON 資料','tab.audit':'稽核與驗證','section.header':'基本資訊','section.pokemon':'寶可夢設定','section.item':'道具設定','section.full':'Full 配信控制欄位','section.json':'結構化 JSON','section.audit':'稽核與一致性','section.history':'變更紀錄','full.warning':'Full 格式修改後的 CRC 尚未經真實樣本驗證，因此僅允許原樣匯出 Full。','json.tip':'下方顯示目前欄位和原始位元組，可複製或匯出 JSON。請在欄位編輯中修改，避免破壞未解析資料。',
+      'inspector.title':'十六進位檢查器','inspector.red':'紅色醒目標示 = 已修改位元組；點選可查看偏移','search.placeholder':'⌕ 搜尋卡片 / ID / 檔名','files.count':'{n} 個檔案','files.none':'找不到符合條件的卡片','files.invalidDate':'無效日期','kind.pokemon':'寶可夢配信','kind.item':'道具配信','kind.bp':'BP 配信','kind.unknown':'未知類型','card.fallback':'配信卡','hero.unknownDate':'未知／未設定','diff.count':'{n} 個變更','diff.empty':'未偵測到位元組修改，原始內容保持不變。',
+      'validation.selected':'已選取 {offset} · {value}','validation.fullLocked':'Full 已修改 · 禁止匯出','validation.untouched':'只修改指定欄位 · 保留未知位元組','files.imported':'已成功匯入 {n} 個檔案','error.integer':'欄位「{field}」需要無號整數','error.fullLocked':'Full 修改後 CRC 尚未驗證，禁止匯出；請先匯出 JSON','error.noFiles':'目前沒有可稽核檔案',
+      'toast.exportBin':'已匯出 {filename}（{n} 位元組差異）','toast.exportJson':'已匯出無損 JSON（相容 v0.1）','toast.exportCsv':'已匯出 {n} 張卡片的稽核報告','toast.cleared':'檔案清單已清空（磁碟原件未改變）','toast.sample':'已載入合成示範卡片，可修改日期或匯入自己的檔案',
+      'audit.format':'檔案格式','audit.bytes':'檔案位元組','audit.reserved':'未知欄位／保留區','audit.reservedValue':'保留原始資料，不會自動重新序列化','audit.sha':'SHA-256（原件）','audit.shaUnavailable':'目前瀏覽器無法使用','audit.modifiedFields':'修改欄位數','audit.modifiedBytes':'變更位元組數','audit.pid':'來源／生成模式','audit.iv':'IV 規則','audit.date':'日期解析','audit.result':'資料稽核','audit.full':'Full 寫回','audit.invalidDate':'日期無法解析或為空','audit.unknownPid':'未知 PID 生成模式','audit.highLevel':'等級超過 100','audit.oddIv':'出現非典型 IV 控制值','audit.nonPokemon':'非寶可夢配信','audit.iv3':'保底 3 項 31','audit.iv2':'保底 2 項 31','audit.ivRaw':'請查看原始 IV 位元組','audit.na':'不適用','audit.ok':'基礎格式檢查通過（不代表官方合法性）','audit.fullLocked':'修改後禁止匯出：CRC 未驗證','audit.fullUnchanged':'未修改可原樣匯出','audit.noDiff':'沒有修改任何位元組。',
+      'pid.0':'固定 PID','pid.1':'隨機可閃光','pid.2':'強制閃光','pid.3':'禁止閃光','pid.unknown':'未知','option.card_type.0':'寶可夢','option.card_type.1':'道具','option.card_type.3':'對戰點數','option.gender.0':'雄','option.gender.1':'雌','option.gender.2':'無性別','option.gender.3':'隨機','option.ability_mode.0':'特性 1','option.ability_mode.1':'特性 2','option.ability_mode.2':'隱藏特性','option.ability_mode.3':'隨機一般特性','option.ability_mode.4':'隨機全部特性','option.nature.255':'隨機',
+      'hint.pid_type':'0 固定 / 1 隨機 / 2 強制閃光 / 3 禁止閃光；變更將影響生成規則。','hint.date':'WC6 為 YYYYMMDD 整數，WC7 年份相對於 2000。','hint.title':'僅修改時重新編碼 UTF-16LE；未編輯原始位元組不變。','hint.status_flags':'原始 8 位元標誌，請搭配遊戲和 PKHeX 研究。','hint.card_type':'為避免結構不一致，首版不允許跨類型修改。','hint.iv_hp':'254 (FE) 通常表示保底 3V，253 (FD) 通常表示保底 2V；255 為隨機。','hint.pid':'若 PID 類型不是固定，這個值未必會用於最終寶可夢。','hint.met_level':'歷史對照欄位；實際等級通常依 level 為準。'
+    },
+    en: {
+      'app.title':'Wonder Card Editor','side.workspace':'Workspace','side.import':'Import Wonder Cards','side.clear':'Clear','side.local':'Local, offline','side.privacy':'Files are processed in your browser and never uploaded.','top.library':'Library','top.workspace':'Wonder Card Studio','top.json':'Export JSON','top.binary':'Export WC File','top.theme':'Switch light/dark theme','top.language':'Interface language',
+      'workspace.description':'Inspect, edit and audit Gen 6 / Gen 7 Wonder Cards. Preserve unknown bytes with non-destructive writes.','workspace.auditCsv':'Export Audit CSV','drop.label':'Drop .wc6 / .wc7 / .wc6full / .wc7full or JSON files here','empty.heading':'Import your first Wonder Card','empty.description':'Select multiple files or drag files onto this window.','empty.open':'Choose Files','hero.changed':'Modified','hero.id':'Card ID','hero.date':'Received Date','hero.size':'File Size','hero.gift':'Mystery Gift Distribution',
+      'tab.fields':'Edit Fields','tab.json':'JSON Data','tab.audit':'Audit & Validate','section.header':'General','section.pokemon':'Pokémon Template','section.item':'Item Gift','section.full':'Full Distribution Settings','section.json':'Structured JSON','section.audit':'Audit & Integrity','section.history':'Change History','full.warning':'The CRC for edited Full cards has not been externally verified with real samples. Only unchanged Full exports are allowed.','json.tip':'Shows current fields and the raw baseline. You may copy or export JSON. To preserve unknown bytes, edit through the Fields tab.',
+      'inspector.title':'Hex Inspector','inspector.red':'Red highlight = changed byte · Click a byte to inspect its offset','search.placeholder':'⌕ Search cards / ID / filename','files.count':'{n} files','files.none':'No matching cards','files.invalidDate':'Invalid date','kind.pokemon':'Pokémon Gift','kind.item':'Item Gift','kind.bp':'BP Gift','kind.unknown':'Unknown Type','card.fallback':'Wonder Card','hero.unknownDate':'Unknown / Not Set','diff.count':'{n} changes','diff.empty':'No byte changes. Original data is preserved.','validation.selected':'Selected {offset} · {value}','validation.fullLocked':'Full modified · Export blocked','validation.untouched':'Only targeted bytes change · Unknown bytes preserved','files.imported':'Imported {n} files',
+      'error.invalidHex':'raw_hex must be a valid even-length hexadecimal string','error.unsupported':'Unsupported extension: use .wc6 / .wc7 / .wc6full / .wc7full','error.size':'{format} must contain {expected} bytes, found {actual}','error.string':'String must not contain null characters','error.longString':'String is too long: maximum {max} UTF-16 code units','error.date':'Date must be a valid YYYY-MM-DD','error.date7':'WC7 dates must be within 2000–2099','error.positive':'Value must be an unsigned integer','error.range':'Value must be between 0 and {max}','error.unknownField':'Unknown or read-only field: {field}',
+      'error.integer':'Field “{field}” requires an unsigned integer','error.fullLocked':'Edited Full CRC is unverified; binary export is blocked. Export JSON instead.','error.noFiles':'No files to audit',
+      'toast.exportBin':'Exported {filename} ({n} bytes changed)','toast.exportJson':'Exported lossless JSON (v0.1 compatible)','toast.exportCsv':'Exported audit report for {n} cards','toast.cleared':'Cleared file list (original files unchanged)','toast.sample':'Loaded a synthetic demo card; edit the date or import your own file',
+      'audit.format':'Format','audit.bytes':'File Bytes','audit.reserved':'Unknown / Reserved Bytes','audit.reservedValue':'Kept verbatim; never silently reserialized','audit.sha':'SHA-256 (Original)','audit.shaUnavailable':'Unavailable in this browser','audit.modifiedFields':'Modified Fields','audit.modifiedBytes':'Changed Bytes','audit.pid':'PID / Generation Rule','audit.iv':'IV Rule','audit.date':'Date Parsing','audit.result':'Audit Result','audit.full':'Full Export','audit.invalidDate':'Date missing or invalid','audit.unknownPid':'Unknown PID generation mode','audit.highLevel':'Level exceeds 100','audit.oddIv':'Unusual IV control value','audit.nonPokemon':'Not a Pokémon gift','audit.iv3':'3 guaranteed 31 IVs','audit.iv2':'2 guaranteed 31 IVs','audit.ivRaw':'See raw IV bytes','audit.na':'N/A','audit.ok':'Basic format check passed (not official legality)','audit.fullLocked':'Blocked: modified Full CRC is unverified','audit.fullUnchanged':'Unchanged Full may be exported verbatim','audit.noDiff':'No bytes modified.',
+      'pid.0':'Fixed PID','pid.1':'Random (shiny possible)','pid.2':'Always Shiny','pid.3':'Never Shiny','pid.unknown':'Unknown','option.card_type.0':'Pokémon','option.card_type.1':'Item','option.card_type.3':'Battle Points','option.gender.0':'Male','option.gender.1':'Female','option.gender.2':'Genderless','option.gender.3':'Random','option.ability_mode.0':'Ability 1','option.ability_mode.1':'Ability 2','option.ability_mode.2':'Hidden Ability','option.ability_mode.3':'Random normal ability','option.ability_mode.4':'Random any ability','option.nature.255':'Random',
+      'hint.pid_type':'0 Fixed / 1 Random / 2 Always Shiny / 3 Never Shiny. Changing this affects how gifts are generated.','hint.date':'WC6 uses YYYYMMDD as an integer; WC7 stores the year relative to 2000.','hint.title':'Reencoded as UTF-16LE only if edited; untouched bytes remain identical.','hint.status_flags':'Raw 8-bit flags; compare with the game and PKHeX.','hint.card_type':'Changing gift type is disabled to avoid incompatible structures.','hint.iv_hp':'254 (FE) commonly requests 3 guaranteed 31s; 253 (FD) 2; 255 random.','hint.pid':'A non-fixed PID type may ignore this stored PID when generating the Pokémon.','hint.met_level':'Historical mapped field; the level field is usually authoritative.',
+      'field.card_id':'Card ID','field.title':'Card Title','field.date':'Received Date','field.card_location':'Card Location','field.card_type':'Gift Type','field.status_flags':'Status Flags','field.card_color':'Card Color / Flags','field.tid':'Trainer ID (TID)','field.sid':'Secret ID (SID)','field.origin_game':'Origin Game','field.encryption_constant':'Encryption Constant (EC)','field.ball':'Poké Ball ID','field.held_item':'Held Item','field.species':'Species ID','field.form':'Form','field.language':'Pokémon Language','field.nickname':'Nickname','field.nature':'Nature Mode','field.gender':'Gender Mode','field.ability_mode':'Ability Mode','field.pid_type':'PID / Shiny Mode','field.egg_location':'Egg Location','field.met_location':'Met Location','field.met_level':'Legacy Met Level','field.ot_gender':'OT Gender','field.ot_name':'Original Trainer Name','field.level':'Level','field.is_egg':'Is Egg','field.pid':'Fixed PID','field.memory_intensity':'Memory Intensity','field.memory_id':'Memory ID','field.memory_variable':'Memory Variable','field.memory_feeling':'Memory Feeling','field.item_id':'Item ID','field.quantity':'Quantity','field.allowed_games_mask':'Allowed Games Mask','field.distribution_effect':'Distribution Animation','field.allowed_language':'Allowed Language','field.distribution_mode':'Distribution Mode','field.sub_id':'Sub ID','field.set_count':'Set Count','field.rarity_or_marker':'Marker','field.move':'Move {n}','field.relearn_move':'Relearn Move {n}','field.iv':'IV · {stat}','field.ev':'EV · {stat}'
+    },
+    ja: {
+      'app.title':'ふしぎなおくりもの編集','side.workspace':'ワークスペース','side.import':'カードを読み込む','side.clear':'クリア','side.local':'ローカル・オフライン','side.privacy':'ファイルはブラウザー内のみで処理され、送信されません。','top.library':'ライブラリー','top.workspace':'カード編集画面','top.json':'JSON を出力','top.binary':'WC ファイルを出力','top.theme':'ライト／ダーク切替','top.language':'表示言語',
+      'workspace.description':'第6・第7世代のふしぎなカードを閲覧・編集・監査します。未解析バイトはそのまま保持します。','workspace.auditCsv':'監査 CSV を出力','drop.label':'.wc6 / .wc7 / .wc6full / .wc7full / JSON をここにドロップ','empty.heading':'カードを読み込みましょう','empty.description':'複数選択、ドラッグ＆ドロップに対応しています。','empty.open':'ファイルを選択','hero.changed':'変更あり','hero.id':'カード ID','hero.date':'受信日','hero.size':'ファイルサイズ','hero.gift':'ふしぎなおくりもの',
+      'tab.fields':'項目編集','tab.json':'JSON データ','tab.audit':'検証・監査','section.header':'基本情報','section.pokemon':'ポケモン設定','section.item':'どうぐ設定','section.full':'Full 配信設定','section.json':'構造化 JSON','section.audit':'監査・整合性','section.history':'変更履歴','full.warning':'Full 形式の変更後 CRC は実データで検証されていません。未編集の Full のみ出力できます。','json.tip':'現在の項目と元のバイト列を表示します。JSON のコピーや出力が可能です。未解析データを守るため項目編集タブで編集してください。',
+      'inspector.title':'16進数インスペクター','inspector.red':'赤色 = 変更したバイト／クリックでオフセットを確認','search.placeholder':'⌕ カード・ID・ファイル名を検索','files.count':'{n} ファイル','files.none':'該当するカードがありません','files.invalidDate':'無効な日付','kind.pokemon':'ポケモン配信','kind.item':'どうぐ配信','kind.bp':'BP 配信','kind.unknown':'不明な形式','card.fallback':'ふしぎなカード','hero.unknownDate':'不明／未設定','diff.count':'{n} 件の変更','diff.empty':'変更されたバイトはありません。元のデータは保持されています。','validation.selected':'選択中 {offset} · {value}','validation.fullLocked':'Full 変更あり · 出力不可','validation.untouched':'指定項目のみ変更／未解析バイトは保持','files.imported':'{n} ファイルを読み込みました',
+      'error.invalidHex':'raw_hex は偶数文字の16進数で入力してください','error.unsupported':'未対応の拡張子です。.wc6 / .wc7 / .wc6full / .wc7full を使用してください','error.size':'{format} は {expected} バイト必要ですが {actual} バイトです','error.string':'文字列にヌル文字を含めることはできません','error.longString':'文字列が長すぎます。最大 {max} UTF-16 単位です','error.date':'日付は有効な YYYY-MM-DD にしてください','error.date7':'WC7 の日付は 2000–2099 年のみ対応します','error.positive':'符号なし整数を指定してください','error.range':'値の範囲は 0..{max} です','error.unknownField':'不明または読み取り専用の項目：{field}',
+      'error.integer':'「{field}」には符号なし整数を入力してください','error.fullLocked':'変更した Full の CRC が未検証のため出力できません。JSON を出力してください。','error.noFiles':'監査するファイルがありません','toast.exportBin':'{filename} を出力しました（{n} バイト変更）','toast.exportJson':'ロスレス JSON を出力しました（v0.1 互換）','toast.exportCsv':'{n} 件の監査 CSV を出力しました','toast.cleared':'ファイル一覧をクリアしました（元ファイルは未変更）','toast.sample':'合成サンプルカードを読み込みました',
+      'audit.format':'ファイル形式','audit.bytes':'バイト数','audit.reserved':'未解析／予約領域','audit.reservedValue':'元のバイト列を変更せず保持','audit.sha':'SHA-256（元ファイル）','audit.shaUnavailable':'このブラウザーでは利用できません','audit.modifiedFields':'変更項目数','audit.modifiedBytes':'変更バイト数','audit.pid':'PID／生成ルール','audit.iv':'個体値ルール','audit.date':'日付の解析','audit.result':'監査結果','audit.full':'Full 出力','audit.invalidDate':'日付が無効または未設定','audit.unknownPid':'不明な PID 生成モード','audit.highLevel':'レベルが 100 を超えています','audit.oddIv':'一般的でない個体値指定','audit.nonPokemon':'ポケモン以外の配信','audit.iv3':'3か所が31保証','audit.iv2':'2か所が31保証','audit.ivRaw':'元の IV バイトを参照','audit.na':'該当なし','audit.ok':'基本形式の検査に合格（公式の合法性判定ではありません）','audit.fullLocked':'変更後 CRC 未検証のため出力不可','audit.fullUnchanged':'未編集の Full はそのまま出力可能','audit.noDiff':'バイトに変更はありません。',
+      'pid.0':'固定 PID','pid.1':'ランダム（色違い可）','pid.2':'必ず色違い','pid.3':'色違い不可','pid.unknown':'不明','option.card_type.0':'ポケモン','option.card_type.1':'どうぐ','option.card_type.3':'BP','option.gender.0':'♂','option.gender.1':'♀','option.gender.2':'性別不明','option.gender.3':'ランダム','option.ability_mode.0':'特性 1','option.ability_mode.1':'特性 2','option.ability_mode.2':'隠れ特性','option.ability_mode.3':'通常特性からランダム','option.ability_mode.4':'すべての特性からランダム','option.nature.255':'ランダム',
+      'hint.pid_type':'0 固定／1 ランダム／2 必ず色違い／3 色違い不可。変更すると生成条件が変わります。','hint.date':'WC6 は YYYYMMDD 整数、WC7 は 2000 年を基準とする年です。','hint.title':'変更したときだけ UTF-16LE で再エンコードします。','hint.status_flags':'生の8ビットフラグです。ゲームと PKHeX で確認してください。','hint.card_type':'形式の不一致を防ぐため、配信種別の変更は無効です。','hint.iv_hp':'254 (FE) は3V、253 (FD) は2V保証の指定によく使用され、255 はランダムです。','hint.pid':'PID モードが固定でない場合、この保存値は実際のポケモンで使用されないことがあります。','hint.met_level':'古い対応項目。通常は level が実際のレベルです。',
+      'field.card_id':'カード ID','field.title':'カード名','field.date':'受信日','field.card_location':'受信元／場所','field.card_type':'おくりもの種別','field.status_flags':'状態フラグ','field.card_color':'カード色／フラグ','field.tid':'トレーナー ID (TID)','field.sid':'裏 ID (SID)','field.origin_game':'出身ゲーム','field.encryption_constant':'暗号化定数 (EC)','field.ball':'ボール ID','field.held_item':'持ち物','field.species':'ポケモン図鑑番号','field.form':'フォルム','field.language':'ポケモンの言語','field.nickname':'ニックネーム','field.nature':'性格','field.gender':'性別','field.ability_mode':'特性モード','field.pid_type':'PID／色違いモード','field.egg_location':'タマゴ入手場所','field.met_location':'出会った場所','field.met_level':'旧レベル項目','field.ot_gender':'親の性別','field.ot_name':'親名','field.level':'レベル','field.is_egg':'タマゴかどうか','field.pid':'固定 PID','field.memory_intensity':'思い出の強さ','field.memory_id':'思い出 ID','field.memory_variable':'思い出の値','field.memory_feeling':'思い出の気持ち','field.item_id':'どうぐ ID','field.quantity':'個数','field.allowed_games_mask':'対応ゲームビット','field.distribution_effect':'配信エフェクト','field.allowed_language':'受信できる言語','field.distribution_mode':'配信モード','field.sub_id':'サブ ID','field.set_count':'設定数','field.rarity_or_marker':'フラグ','field.move':'わざ {n}','field.relearn_move':'思い出しわざ {n}','field.iv':'個体値 · {stat}','field.ev':'努力値 · {stat}'
+    }
+  };
+  Object.assign(catalog['zh-TW'], {
+    'error.invalidHex':'raw_hex 必須是偶數長度的十六進位字串',
+    'error.unsupported':'不支援的檔案副檔名，請使用 .wc6 / .wc7 / .wc6full / .wc7full',
+    'error.size':'{format} 應為 {expected} 位元組，實際為 {actual}',
+    'error.string':'字串不得包含空字元',
+    'error.longString':'字串過長：最多 {max} 個 UTF-16 單位',
+    'error.date':'日期必須為有效的 YYYY-MM-DD',
+    'error.date7':'WC7 日期僅支援 2000–2099',
+    'error.positive':'數值必須是非負整數',
+    'error.range':'值須在 0..{max} 範圍內',
+    'error.unknownField':'未知或不可編輯欄位：{field}',
+    'field.card_id':'卡片 ID','field.title':'卡片標題','field.date':'接收日期','field.card_location':'卡片來源／位置','field.card_type':'禮物類型','field.status_flags':'狀態旗標','field.card_color':'背景色／卡片旗標',
+    'field.tid':'訓練家 ID (TID)','field.sid':'秘密 ID (SID)','field.origin_game':'來源遊戲','field.encryption_constant':'加密常數 (EC)','field.ball':'精靈球 ID','field.held_item':'攜帶道具','field.species':'寶可夢圖鑑編號','field.form':'形態','field.language':'寶可夢語言','field.nickname':'暱稱','field.nature':'性格模式','field.gender':'性別模式','field.ability_mode':'特性模式','field.pid_type':'PID／異色模式',
+    'field.egg_location':'蛋取得地點','field.met_location':'相遇地點','field.met_level':'舊版等級欄位','field.ot_gender':'原訓練家性別','field.ot_name':'原訓練家名字','field.level':'等級','field.is_egg':'是否為蛋','field.pid':'固定 PID','field.memory_intensity':'回憶強度','field.memory_id':'回憶 ID','field.memory_variable':'回憶參數','field.memory_feeling':'回憶感受',
+    'field.item_id':'道具 ID','field.quantity':'數量','field.allowed_games_mask':'遊戲版本遮罩','field.distribution_effect':'動畫效果','field.allowed_language':'允許接收的語言','field.distribution_mode':'配信模式','field.sub_id':'子 ID','field.set_count':'設定數量','field.rarity_or_marker':'旗標位','field.move':'招式 {n}','field.relearn_move':'回憶招式 {n}','field.iv':'IV · {stat}','field.ev':'EV · {stat}'
+  });
+  const natures = {
+    'zh-CN':['勤奋','怕寂寞','勇敢','固执','顽皮','大胆','坦率','悠闲','淘气','乐天','胆小','急躁','认真','爽朗','天真','内敛','慢吞吞','冷静','害羞','马虎','温和','温顺','自大','慎重','浮躁'],
+    'zh-TW':['勤奮','怕寂寞','勇敢','固執','頑皮','大膽','坦率','悠閒','淘氣','樂天','膽小','急躁','認真','爽朗','天真','內斂','慢吞吞','冷靜','害羞','馬虎','溫和','溫順','自大','慎重','浮躁'],
+    en:['Hardy','Lonely','Brave','Adamant','Naughty','Bold','Docile','Relaxed','Impish','Lax','Timid','Hasty','Serious','Jolly','Naive','Modest','Mild','Quiet','Bashful','Rash','Calm','Gentle','Sassy','Careful','Quirky'],
+    ja:['がんばりや','さみしがり','ゆうかん','いじっぱり','やんちゃ','ずぶとい','すなお','のんき','わんぱく','のうてんき','おくびょう','せっかち','まじめ','ようき','むじゃき','ひかえめ','おっとり','れいせい','てれや','うっかりや','おだやか','おとなしい','なまいき','しんちょう','きまぐれ']
+  };
+  const localeNames = {'zh-CN':'简体中文','zh-TW':'繁體中文',en:'English',ja:'日本語'};
+  let locale = 'zh-CN';
+  const choose = lang => {
+    if (Object.hasOwn(catalog,lang)) return lang;
+    if (lang?.startsWith('en')) return 'en';
+    if (lang?.startsWith('ja')) return 'ja';
+    if (lang?.startsWith('zh')) return /(?:TW|HK|Hant)/i.test(lang) ? 'zh-TW' : 'zh-CN';
+    return 'zh-CN';
+  };
+  try { locale=choose(localStorage.getItem('wondercard.ui.locale') || navigator.language); } catch { /* local file/private mode */ }
+  function t(key,params={}) {
+    const text=(catalog[locale]||{})[key] ?? catalog['zh-CN'][key] ?? key;
+    return text.replace(/\{(\w+)\}/g,(_,k)=>String(params[k]??`{${k}}`));
+  }
+  function field(key) {
+    if (/^(?:move|relearn_move)_[1-4]$/.test(key)) {
+      const m=key.match(/^(move|relearn_move)_(\d)$/);
+      return t(`field.${m[1]}`,{n:m[2]});
+    }
+    if (/^(?:iv|ev)_(hp|atk|def|spe|spa|spd)$/.test(key)) {
+      const m=key.match(/^(iv|ev)_(\w+)$/);
+      const stat={hp:'HP',atk:locale==='ja'?'攻撃':'ATK',def:locale==='ja'?'防御':'DEF',spe:locale==='ja'?'素早さ':'SPE',spa:locale==='ja'?'特攻':'SPA',spd:locale==='ja'?'特防':'SPD'}[m[2]];
+      return t(`field.${m[1]}`,{stat});
+    }
+    return t('field.'+key);
+  }
+  function option(key,num) {
+    if(key==='nature' && num!==255)return (natures[locale]||natures['zh-CN'])[num]||String(num);
+    if(key==='pid_type')return t('pid.'+num);
+    return t(`option.${key}.${num}`);
+  }
+  function translateDom(){
+    document.documentElement.lang=locale;
+    document.title=`WonderCard Studio · ${t('app.title')}`;
+    for(const e of document.querySelectorAll('[data-i18n]'))e.textContent=t(e.dataset.i18n);
+    for(const e of document.querySelectorAll('[data-i18n-placeholder]'))e.placeholder=t(e.dataset.i18nPlaceholder);
+    for(const e of document.querySelectorAll('[data-i18n-title]'))e.title=t(e.dataset.i18nTitle);
+    for(const e of document.querySelectorAll('[data-i18n-aria-label]'))e.setAttribute('aria-label',t(e.dataset.i18nAriaLabel));
+    const s=document.getElementById('locale-switch');if(s)s.value=locale;
+  }
+  function setLocale(lang){
+    locale=choose(lang);
+    try{localStorage.setItem('wondercard.ui.locale',locale);}catch{ /* private mode */ }
+    translateDom();
+    window.dispatchEvent(new CustomEvent('wc-locale-change',{detail:{locale}}));
+  }
+  function init(){translateDom(); const sel=document.getElementById('locale-switch');if(sel)sel.addEventListener('change',()=>setLocale(sel.value));}
+  window.WC_I18N={catalog,localeNames,t,field,option,getLocale:()=>locale,setLocale,translateDom,init};
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
+})();
+</script><script>
+/* WonderCard Studio v0.2 — offline binary editor, no external dependencies.
+ * Field positions generated from the v0.1 Python core. Unknown bytes preserved.
+ * Does not claim official event legality validation.
+ */
+(() => {
+  'use strict';
+  const SPECS = window.WC_MANIFEST;
+  const I = window.WC_I18N;
+  const t = (key, values) => I.t(key, values);
+  const ALL_FORMATS = ['wc6', 'wc7', 'wc6full', 'wc7full'];
+  const SIZE = 0x108, FULL_SIZE = 0x310, FULL_START = 0x208;
+  const IV_ORDER = ['hp','atk','def','spe','spa','spd'];
+  const $ = id => document.getElementById(id);
+  const files = [];
+  let selected = -1;
+  let activeTab = 'fields';
+  let inspectorTab = 'hex';
+  let highlightedOffset = null;
+  const textDecoder = new TextDecoder('utf-16le', { fatal: false });
+  const FIELD_LABELS = {
+    card_id:'卡片 ID', title:'卡片标题', date:'接收日期', card_location:'卡片来源 / Location',
+    card_type:'礼物类型', status_flags:'状态标志位', card_color:'背景色 / 卡片标志',
+    tid:'训练家 ID (TID)', sid:'秘密 ID (SID)', origin_game:'来源游戏', encryption_constant:'加密常数 (EC)',
+    ball:'精灵球 ID', held_item:'携带道具', species:'宝可梦图鉴编号', form:'形态', language:'语言',
+    nickname:'昵称', nature:'性格模式', gender:'性别模式', ability_mode:'特性模式', pid_type:'PID / 闪光模式',
+    egg_location:'蛋获得地点', met_location:'相遇地点', met_level:'旧版等级字段',
+    ot_gender:'原训练家性别', ot_name:'原训练家名字', level:'等级', is_egg:'是否为蛋', pid:'固定 PID',
+    memory_intensity:'Memory 强度', memory_id:'Memory ID', memory_variable:'Memory 参数',memory_feeling:'Memory 感受',
+    item_id:'道具 ID', quantity:'数量',
+    allowed_games_mask:'游戏版本掩码',distribution_effect:'动画效果',allowed_language:'允许语言',
+    distribution_mode:'配信模式',sub_id:'Sub ID',set_count:'设置数量',rarity_or_marker:'标识位'
+  };
+  for (let i=1;i<=4;i++) { FIELD_LABELS[`move_${i}`]=`技能 ${i}`; FIELD_LABELS[`relearn_move_${i}`]=`回忆招式 ${i}`; }
+  for (const [i,s] of IV_ORDER.entries()) { const cn=['HP','攻击','防御','速度','特攻','特防'][i]; FIELD_LABELS[`iv_${s}`]=`IV · ${cn}`; FIELD_LABELS[`ev_${s}`]=`EV · ${cn}`; }
+  const SELECTS = {
+    card_type:[[0,'0 · 宝可梦'],[1,'1 · 道具'],[3,'3 · 对战点数']],
+    pid_type:[[0,'0 · 固定 PID'],[1,'1 · 随机（允许闪光）'],[2,'2 · 强制闪光'],[3,'3 · 禁止闪光']],
+    gender:[[0,'0 · 雄'],[1,'1 · 雌'],[2,'2 · 无性别'],[3,'3 · 随机']],
+    ability_mode:[[0,'0 · 特性 1'],[1,'1 · 特性 2'],[2,'2 · 隐藏特性'],[3,'3 · 随机普通特性'],[4,'4 · 随机全部特性']],
+    nature:[...['勤奋','怕寂寞','勇敢','固执','顽皮','大胆','坦率','悠闲','淘气','乐天','胆小','急躁','认真','爽朗','天真','内敛','慢吞吞','冷静','害羞','马虎','温和','温顺','自大','慎重','浮躁'].map((v,i)=>[i,`${i} · ${v}`]),[255,'255 · 随机']]
+  };
+  const HINTS = { pid_type:'0 固定 / 1 随机 / 2 强制闪 / 3 禁止闪。改变此项会影响配信生成规则。',
+    date:'WC6 为 YYYYMMDD 整数；WC7 的年份为相对 2000 的编码。',
+    title:'改动后重编码为 UTF-16LE；未编辑的原始字节保持不变。',
+    status_flags:'原始 8 位标志，请结合游戏与 PKHeX 研究。',
+    card_type:'为防止字段结构不一致，首版禁止跨类型修改。',
+    iv_hp:'254 (FE) 常用于保底 3V；253 (FD) 常用于保底 2V；255 为随机。',
+    pid:'当 PID 类型不是固定 PID 时，这个数值未必直接用于最终宝可梦。',
+    met_level:'历史映射字段，实际等级一般以 level 字段为准。'};
+  const HEADER_ORDER=['card_id','title','date','card_type','card_location','status_flags','card_color'];
+  const POKEMON_ORDER=['species','form','level','pid_type','nature','gender','ability_mode','language','tid','sid','ot_name','ot_gender','nickname','origin_game','ball','held_item','encryption_constant','pid','met_location','egg_location','is_egg','move_1','move_2','move_3','move_4','iv_hp','iv_atk','iv_def','iv_spe','iv_spa','iv_spd','ev_hp','ev_atk','ev_def','ev_spe','ev_spa','ev_spd','relearn_move_1','relearn_move_2','relearn_move_3','relearn_move_4','met_level','memory_intensity','memory_id','memory_variable','memory_feeling'];
+  const bytesToHex=bytes=>Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');
+  function hexToBytes(hex) { if(typeof hex !=='string' || hex.length%2 || !/^[\da-f]*$/i.test(hex)) throw Error(t('error.invalidHex')); const bytes=new Uint8Array(hex.length/2);for(let i=0;i<bytes.length;i++)bytes[i]=parseInt(hex.slice(i*2,i*2+2),16);return bytes; }
+  const clone = obj => JSON.parse(JSON.stringify(obj));
+  const escapeHtml=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const fmtOffset=n=>'0x'+n.toString(16).toUpperCase().padStart(3,'0');
+  function getFormat(filename, raw) {
+    const suffix=filename.toLowerCase().split('.').pop();
+    let format=ALL_FORMATS.includes(suffix)?suffix:null;
+    if (!format) {
+      if(raw.length===SIZE) { const n=new DataView(raw.buffer,raw.byteOffset,raw.byteLength).getUint32(0x4c,true);format=n>20000000&&n<21001231?'wc6':'wc7'; }
+      else throw Error(t('error.unsupported'));
+    }
+    const expected=format.endsWith('full')?FULL_SIZE:SIZE;
+    if(raw.length!==expected)throw Error(t('error.size',{format,expected,actual:raw.length}));
+    return format;
+  }
+  function validISO(value) {
+    if(typeof value!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(value))return false;
+    const [y,m,d]=value.split('-').map(Number);
+    if(y<1||m<1||m>12||d<1||d>31)return false;
+    const dt=new Date(Date.UTC(y,m-1,d));
+    return dt.getUTCFullYear()===y && dt.getUTCMonth()===m-1 && dt.getUTCDate()===d;
+  }
+  function readField(bytes, base, spec, gen) {
+    const ofs=base+spec.offset, v=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+    if(spec.kind==='string')return textDecoder.decode(bytes.slice(ofs,ofs+spec.size)).split('\0')[0];
+    if(spec.kind==='date') {
+      const n=v.getUint32(ofs,true), year=Math.floor(n/10000)+(gen===7?2000:0),mon=Math.floor(n/100)%100,day=n%100;
+      const iso=`${String(year).padStart(4,'0')}-${String(mon).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+      return validISO(iso)?iso:null;
+    }
+    return spec.kind==='u8'?v.getUint8(ofs):spec.kind==='u16'?v.getUint16(ofs,true):v.getUint32(ofs,true);
+  }
+  function writeField(bytes,base,spec,value,gen){
+    const ofs=base+spec.offset,v=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+    if(spec.kind==='string'){
+      if(typeof value!=='string'||value.includes('\0'))throw Error(t('error.string'));
+      const units=[];for(let i=0;i<value.length;i++){const n=value.charCodeAt(i);units.push(n&255,n>>>8);}
+      if(units.length+2>spec.size)throw Error(t('error.longString',{max:(spec.size-2)/2}));
+      bytes.fill(0,ofs,ofs+spec.size);bytes.set(units,ofs);return;
+    }
+    if(spec.kind==='date'){
+      if(value===null||value==='') {v.setUint32(ofs,0,true);return;}
+      if(!validISO(value))throw Error(t('error.date'));
+      const [year,month,day]=value.split('-').map(Number);
+      if(gen===7&&(year<2000||year>2099))throw Error(t('error.date7'));
+      v.setUint32(ofs,(year-(gen===7?2000:0))*10000+month*100+day,true);return;
+    }
+    if(typeof value!=='number'||!Number.isInteger(value)||value<0)throw Error(t('error.positive'));
+    const max=spec.kind==='u8'?255:spec.kind==='u16'?65535:4294967295;
+    if(value>max)throw Error(t('error.range',{max}));
+    if(spec.kind==='u8')v.setUint8(ofs,value);else if(spec.kind==='u16')v.setUint16(ofs,value,true);else v.setUint32(ofs,value,true);
+  }
+  function readObject(raw,base,manifest,gen){const out={};for(const [k,v] of Object.entries(manifest))out[k]=readField(raw,base,v,gen);return out;}
+  function parse(raw,format,filename){
+    getFormat(filename||'test.'+format,raw);
+    const gen=format.startsWith('wc6')?6:7,base=format.endsWith('full')?FULL_START:0;
+    const fields=readObject(raw,base,SPECS.header,gen);
+    if(fields.card_type===0)fields.pokemon=readObject(raw,base,SPECS.pokemon,gen);
+    else if(fields.card_type===1)fields.item=readObject(raw,base,SPECS.item,gen);
+    if(format.endsWith('full'))fields.full=readObject(raw,0,SPECS.full,gen);
+    return {schema:'wondercard-toolkit-v1',format,byte_length:raw.length,source_filename:filename||null,
+      source_sha256:null,raw_hex:bytesToHex(raw),fields,baseline_fields:clone(fields),preview:makePreview(fields,format,raw),notes:'Edit fields only. raw_hex is authoritative; all unedited bytes are preserved.'};
+  }
+  function makePreview(fields, format, raw){
+    const status=fields.status_flags;
+    const pos=format.endsWith('full')?FULL_START:0;
+    const v=new DataView(raw.buffer,raw.byteOffset,raw.byteLength);
+    const pv={generation:format.startsWith('wc6')?6:7,gift_type:({0:'pokemon',1:'item',3:'battle_points'})[fields.card_type]||'unknown',once_only:!!(status&1),used:!!(status&2),status_flags_hex:'0x'+status.toString(16).padStart(2,'0').toUpperCase(),raw_date_number:v.getUint32(pos+0x4c,true)};
+    if(format.startsWith('wc7'))pv.once_per_day=!!(status&4);
+    if(fields.pokemon){const pk=fields.pokemon;pv.pid_rule=({0:'fixed_pid',1:'random',2:'always_shiny',3:'never_shiny'})[pk.pid_type]||'unknown';pv.iv_generation=pk.iv_hp===254?'3 guaranteed 31':pk.iv_hp===253?'2 guaranteed 31':'per-stat, 255 means random';}
+    if(format.endsWith('full')){pv.stored_crc16_hex='0x'+v.getUint16(0x202,true).toString(16).toUpperCase().padStart(4,'0');pv.full_extra_raw_hex=bytesToHex(raw.slice(0,FULL_START));}
+    return pv;
+  }
+  function flatten(obj,prefix='',result={}) { for(const [key,value] of Object.entries(obj)) {const path=prefix?prefix+'.'+key:key;if(value!==null&&typeof value==='object'&&!Array.isArray(value))flatten(value,path,result);else result[path]=value;}return result; }
+  function applyChanges(doc){
+    if(doc.schema!=='wondercard-toolkit-v1'||!ALL_FORMATS.includes(doc.format))throw Error('不是支持的 Toolkit JSON 格式');
+    const raw=hexToBytes(doc.raw_hex),expected=doc.format.endsWith('full')?FULL_SIZE:SIZE;
+    if(raw.length!==expected)throw Error('JSON 中的 raw_hex 长度不正确');
+    if(!doc.fields||!doc.baseline_fields)throw Error('缺少 fields / baseline_fields');
+    const a=flatten(doc.fields),b=flatten(doc.baseline_fields);
+    if(Object.keys(a).sort().join('|')!==Object.keys(b).sort().join('|'))throw Error('JSON 字段结构已变化，不允许添加/删除字段');
+    if(a.card_type!==b.card_type)throw Error('首版不允许直接修改 card_type，请改用对应的配信模板');
+    const base=doc.format.endsWith('full')?FULL_START:0,gen=doc.format.startsWith('wc6')?6:7;
+    const modified=[];
+    for(const key of Object.keys(a)) {
+      if(a[key]===b[key])continue;
+      const bits=key.split('.');const section=bits.length===2?bits[0]:'header';const name=bits[bits.length-1];
+      const spec=SPECS[section]?.[name];if(!spec)throw Error(t('error.unknownField',{field:key}));
+      writeField(raw,section==='full'?0:base,spec,a[key],gen);modified.push(key);
+    }
+    return {raw,modified};
+  }
+  function getDiff(original,updated){ const diff=[];for(let i=0;i<original.length;i++)if(original[i]!==updated[i])diff.push({offset:i,old:original[i],now:updated[i]});return diff; }
+  async function sha256(bytes){
+    if(!globalThis.crypto?.subtle)return null;
+    try {const hash=await crypto.subtle.digest('SHA-256',bytes);return bytesToHex(new Uint8Array(hash));}catch{return null;}
+  }
+  function kindName(fields) {return t(({0:'kind.pokemon',1:'kind.item',3:'kind.bp'})[fields.card_type]||'kind.unknown');}
+  function cardName(file){const f=file.doc.fields;return f.title||`${f.pokemon?.species?'No.'+f.pokemon.species:t('card.fallback')} · #${f.card_id}`;}
+  async function importBytes(filename,raw){
+    const fmt=getFormat(filename,raw),doc=parse(raw,fmt,filename);
+    doc.source_sha256=await sha256(raw);
+    files.push({filename,doc});selected=files.length-1;render();return doc;
+  }
+  async function importJSON(filename,text){
+    const doc=JSON.parse(text);const {raw}=applyChanges(doc); const bin=hexToBytes(doc.raw_hex);
+    doc.format=getFormat('source.'+doc.format,bin);
+    doc.byte_length=bin.length;
+    if(!doc.source_sha256)doc.source_sha256=await sha256(bin);
+    doc.preview=makePreview(doc.fields,doc.format,raw);
+    files.push({filename,doc});selected=files.length-1;render();
+  }
+  async function importOne(file){if(file.name.toLowerCase().endsWith('.json'))await importJSON(file.name,await file.text());else await importBytes(file.name,new Uint8Array(await file.arrayBuffer()));}
+  async function importFiles(incoming){let ok=0,errs=[];for(const file of incoming){try{await importOne(file);ok++;}catch(err){errs.push(`${file.name}: ${err.message}`);}}if(errs.length)toast(errs.slice(0,3).join(' | '),true);else if(ok)toast(t('files.imported',{n:ok}));}
+  function current(){return files[selected];}
+  function currentState(){const entry=current();if(!entry)return null;const doc=entry.doc;const {raw,modified}=applyChanges(doc);const baseline=hexToBytes(doc.raw_hex);return {entry,doc,raw,baseline,modified,diff:getDiff(baseline,raw)};}
+  function displayField(obj,spec,key,section,doc){
+    const value=obj[key],base=section==='full'?0:doc.format.endsWith('full')?FULL_START:0;
+    const absolute=base+spec.offset,edited=doc.baseline_fields[section==='header'?'ignored':section];
+    const original=section==='header'?doc.baseline_fields[key]:edited?.[key];
+    const changed=value!==original;
+    const id=`f-${section}-${key}`;
+    const readOnly=key==='card_type';
+    let input;
+    const options=SELECTS[key] ? SELECTS[key].map(([n]) => [n,`${n} · ${I.option(key,n)}`]) : null;
+    if(key==='date')input=`<input type="date" class="field-input" id="${id}" value="${escapeHtml(value||'')}" ${readOnly?'disabled':''}>`;
+    else if(options && options.some(([n])=>n===value) || options && readOnly){
+      input=`<select id="${id}" class="field-input" ${readOnly?'disabled':''}>${options.map(([n,title])=>`<option value="${n}" ${n===value?'selected':''}>${escapeHtml(title)}</option>`).join('')}</select>`;
+    }else if(spec.kind==='string'){
+      input=`<input type="text" class="field-input" id="${id}" value="${escapeHtml(value??'')}" ${readOnly?'disabled':''}>`;
+    }else{
+      input=`<input type="text" spellcheck="false" class="field-input" inputmode="numeric" id="${id}" value="${escapeHtml(String(value??''))}" ${readOnly?'disabled':''}>`;
+    }
+    const extra=HINTS[key]?`<div class="field-note">${escapeHtml(t('hint.'+key))}</div>`:'';
+    const wide=(key==='title'||key==='ot_name'||key==='nickname')?' wide':'';
+    return `<div class="form-group${changed?' field-changed':''}${wide}" data-field="${section}.${key}"><div class="form-top"><label class="field-label" for="${id}">${escapeHtml(I.field(key))}</label><span class="field-offset">${fmtOffset(absolute)}</span></div>${input}${extra}</div>`;
+  }
+  function drawFields(){
+    const state=currentState();if(!state)return;
+    const {doc}=state,fields=doc.fields;
+    $('fields-header').innerHTML=HEADER_ORDER.filter(k=>k in fields).map(k=>displayField(fields,SPECS.header[k],k,'header',doc)).join('');
+    $('pokemon-section').hidden=!fields.pokemon;$('item-section').hidden=!fields.item;$('full-section').hidden=!fields.full;
+    if(fields.pokemon){ const order=POKEMON_ORDER.concat(Object.keys(fields.pokemon).filter(k=>!POKEMON_ORDER.includes(k)));
+      $('fields-pokemon').innerHTML=order.filter(k=>k in fields.pokemon).map(k=>displayField(fields.pokemon,SPECS.pokemon[k],k,'pokemon',doc)).join('');}
+    if(fields.item)$('fields-item').innerHTML=Object.keys(fields.item).map(k=>displayField(fields.item,SPECS.item[k],k,'item',doc)).join('');
+    if(fields.full)$('fields-full').innerHTML=Object.keys(fields.full).map(k=>displayField(fields.full,SPECS.full[k],k,'full',doc)).join('');
+    document.querySelectorAll('.form-group .field-input').forEach(input=>{
+      const group=input.closest('.form-group'),[section,key]=group.dataset.field.split('.');
+      input.addEventListener('focus',()=>{group.classList.add('focused');highlightedOffset=(section==='full'?0:doc.format.endsWith('full')?FULL_START:0)+SPECS[section==='header'?'header':section][key].offset;});
+      input.addEventListener('blur',()=>group.classList.remove('focused'));
+      input.addEventListener('change',()=>{
+        const spec=SPECS[section][key];let v=input.value;
+        if(key==='date')v=v||null;
+        else if(spec.kind!=='string') {const cleaned=v.trim(); if(!/^(0x[0-9a-f]+|\d+)$/i.test(cleaned)){toast(t('error.integer',{field:I.field(key)}),true);input.value=String(section==='header'?doc.fields[key]:doc.fields[section][key]);return;}v=Number(cleaned);}
+        const object=section==='header'?doc.fields:doc.fields[section],previous=object[key];
+        object[key]=v;
+        try{const preview=applyChanges(doc);if(doc.format.endsWith('full') && preview.modified.length){ /* read-only Full export, edits displayed */ }
+          group.classList.toggle('field-changed',v!==(section==='header'?doc.baseline_fields[key]:doc.baseline_fields[section][key]));
+          refresh();
+        }catch(e){object[key]=previous;input.value=String(previous??'');toast(e.message,true);}
+      });
+    });
+  }
+  function drawFileList(){
+    const term=$('search').value.trim().toLowerCase();$('file-count').textContent=t('files.count',{n:files.length});
+    const filtered=files.map((entry,index)=>({entry,index})).filter(({entry})=>{
+      const f=entry.doc.fields;return [entry.filename,f.title,f.card_id,f.pokemon?.species].some(x=>String(x??'').toLowerCase().includes(term));
+    });
+    $('file-list').innerHTML=filtered.length?filtered.map(({entry,index})=>{
+      const f=entry.doc.fields,dirty=Object.keys(flatten(f)).some(k=>flatten(f)[k]!==flatten(entry.doc.baseline_fields)[k]);
+      return `<button class="file-entry${index===selected?' selected':''}" data-index="${index}" role="option" aria-selected="${index===selected}"><span class="file-symbol">${entry.doc.format.toUpperCase().replace('FULL','F')}</span><span class="file-info"><strong title="${escapeHtml(entry.filename)}">${escapeHtml(cardName(entry))}${dirty?' •':''}</strong><small>#${f.card_id} · ${escapeHtml(f.date||t('files.invalidDate'))}</small></span></button>`;
+    }).join(''):`<div class="no-results">${escapeHtml(t('files.none'))}</div>`;
+    document.querySelectorAll('.file-entry').forEach(btn=>btn.addEventListener('click',()=>{selected=Number(btn.dataset.index);render();}));
+  }
+  function drawHero(state){
+    const {doc,entry,modified}=state,fields=doc.fields;
+    $('hero-gen').textContent=doc.format.startsWith('wc6')?'GEN VI':'GEN VII';
+    $('hero-format').textContent=doc.format.toUpperCase();$('hero-kind').textContent=kindName(fields).toUpperCase();
+    $('dirty-pill').hidden=modified.length===0;
+    $('card-title').textContent=fields.title||`Wonder Card #${fields.card_id}`;
+    $('card-subtitle').textContent=`${entry.filename} · ${fields.pokemon?'No.'+fields.pokemon.species:kindName(fields)}`;
+    $('hero-id').textContent='#'+String(fields.card_id).padStart(4,'0');
+    $('hero-date').textContent=fields.date||t('hero.unknownDate');$('hero-size').textContent=doc.byte_length+' bytes';
+    $('export-bin').disabled=doc.format.endsWith('full')&&modified.length>0;
+    $('export-bin').title=$('export-bin').disabled?t('error.fullLocked'):'';
+  }
+  function drawHex(state){
+    const {raw,diff}=state, changed=new Set(diff.map(x=>x.offset));
+    $('hex-count').textContent=t('diff.count',{n:diff.length});
+    const n=8;let lines=[];
+    for(let i=0;i<raw.length;i+=n){let buttons=[];for(let j=i;j<Math.min(i+n,raw.length);j++){
+      const b=raw[j].toString(16).toUpperCase().padStart(2,'0');buttons.push(`<button class="hex-byte${changed.has(j)?' changed':''}${highlightedOffset===j?' selected':''}" data-offset="${j}" title="${fmtOffset(j)} : ${b}">${b}</button>`);
+    }lines.push(`<div class="hex-line"><span class="hex-addr">${fmtOffset(i)}</span><span class="hex-bytes">${buttons.join('')}</span></div>`);}
+    const view=$('hex-view'),oldScroll=view.scrollTop;view.innerHTML=lines.join('');view.scrollTop=oldScroll;
+    view.querySelectorAll('button').forEach(btn=>btn.addEventListener('click',()=>{highlightedOffset=Number(btn.dataset.offset);view.querySelectorAll('button.selected').forEach(n=>n.classList.remove('selected'));btn.classList.add('selected');$('hex-validation').textContent=t('validation.selected',{offset:fmtOffset(highlightedOffset),value:'0x'+raw[highlightedOffset].toString(16).toUpperCase().padStart(2,'0')});}));
+    $('diff-view').innerHTML=diff.length?diff.map(x=>`<div class="diff-item"><b>${fmtOffset(x.offset)}</b><span class="from"> &nbsp; ${x.old.toString(16).toUpperCase().padStart(2,'0')}</span> → <span class="to">${x.now.toString(16).toUpperCase().padStart(2,'0')}</span></div>`).join(''):`<p>${escapeHtml(t('diff.empty'))}</p>`;
+    $('hex-validation').textContent=state.doc.format.endsWith('full')&&state.modified.length?t('validation.fullLocked'):t('validation.untouched');
+  }
+  function drawJson(state){
+    const doc=clone(state.doc);doc.preview=makePreview(doc.fields,doc.format,state.raw);doc.notes='Edit fields only. raw_hex is original bytes; changes exist in fields.';
+    $('json-text').textContent=JSON.stringify(doc,null,2);
+  }
+  function drawAudit(state){
+    const {doc,raw,modified,diff}=state;const f=doc.fields,pk=f.pokemon;
+    const flags=[];
+    if(f.date===null)flags.push(t('audit.invalidDate'));
+    if(pk&&![0,1,2,3].includes(pk.pid_type))flags.push(t('audit.unknownPid'));
+    if(pk&&pk.level>100)flags.push(t('audit.highLevel'));
+    if(pk&&IV_ORDER.some(s=>![...Array(32).keys(),253,254,255].includes(pk[`iv_${s}`])))flags.push(t('audit.oddIv'));
+    const rows=[
+      [t('audit.format'),doc.format.toUpperCase()],[t('audit.bytes'),`${raw.length} bytes`],
+      [t('audit.reserved'),t('audit.reservedValue')],
+      [t('audit.sha'),doc.source_sha256||t('audit.shaUnavailable')],
+      [t('audit.modifiedFields'),String(modified.length)],[t('audit.modifiedBytes'),String(diff.length)],
+      [t('audit.pid'),pk?t('pid.'+pk.pid_type):t('audit.nonPokemon')],
+      [t('audit.iv'),pk?(pk.iv_hp===254?t('audit.iv3'):pk.iv_hp===253?t('audit.iv2'):t('audit.ivRaw')):t('audit.na')],
+      [t('audit.date'),f.date||t('files.invalidDate')],[t('audit.result'),flags.length?flags.join('；'):t('audit.ok')],
+      [t('audit.full'),doc.format.endsWith('full')?(modified.length?t('audit.fullLocked'):t('audit.fullUnchanged')):t('audit.na')]
+    ];
+    $('audit-items').innerHTML=rows.map(([name,value])=>`<div class="audit-row"><span>${escapeHtml(name)}</span><strong class="${name===t('audit.result')&&!flags.length?'ok':name===t('audit.result')||name===t('audit.full')&&modified.length?'warn':''}">${escapeHtml(value)}</strong></div>`).join('');
+    $('audit-diff').innerHTML=diff.length?diff.map(x=>`<div class="diff-row"><span>${fmtOffset(x.offset)}</span><b>${x.old.toString(16).toUpperCase().padStart(2,'0')} → ${x.now.toString(16).toUpperCase().padStart(2,'0')}</b></div>`).join(''):`<div class="diff-row">${escapeHtml(t('audit.noDiff'))}</div>`;
+  }
+  function refresh(){const state=currentState();if(!state)return;drawHero(state);drawFileList();drawHex(state);if(activeTab==='json')drawJson(state);if(activeTab==='audit')drawAudit(state);}
+  function render(){
+    drawFileList();const state=currentState();const has=!!state;
+    $('empty-state').hidden=has;$('editor').hidden=!has;$('export-bin').disabled=!has;$('export-json').disabled=!has;
+    if(!has)return;
+    drawHero(state);drawFields();drawHex(state);drawJson(state);drawAudit(state);
+  }
+  function toast(msg,error=false){const box=$('toast');box.textContent=msg;box.className='toast show'+(error?' error':'');clearTimeout(toast.timer);toast.timer=setTimeout(()=>box.className='toast',4500);}
+  function download(filename,bytes,type){const blob=new Blob([bytes],{type});const url=URL.createObjectURL(blob);const link=document.createElement('a');link.href=url;link.download=filename;document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),5000);}
+  function basenameWithoutExt(s){return s.replace(/\.(wc6|wc7|wc6full|wc7full|json)$/i,'');}
+  function exportBinary(){try{const state=currentState();if(!state)return;if(state.doc.format.endsWith('full')&&state.modified.length)throw Error(t('error.fullLocked'));
+      const filename=basenameWithoutExt(state.entry.filename)+'_edited.'+state.doc.format;
+      download(filename,state.raw,'application/octet-stream');toast(t('toast.exportBin',{filename,n:state.diff.length}));
+    }catch(e){toast(e.message,true);}}
+  function exportJson(){try{const state=currentState();if(!state)return;const doc=clone(state.doc);doc.preview=makePreview(doc.fields,doc.format,state.raw);download(basenameWithoutExt(state.entry.filename)+'.'+doc.format+'.json',JSON.stringify(doc,null,2)+'\n','application/json');toast(t('toast.exportJson'));}catch(e){toast(e.message,true);}}
+  function auditCsv(){
+    if(!files.length){toast(t('error.noFiles'),true);return;}
+    const names=['file','format','card_id','title','date','card_type','species','pid_type','pid_rule','nature','ivs_raw','language','origin_game','edited_fields','changed_bytes','full_write_locked'];
+    const rows=files.map(entry=>{
+      const doc=entry.doc,f=doc.fields,pk=f.pokemon||{},state=applyChanges(doc),base=hexToBytes(doc.raw_hex),diff=getDiff(base,state.raw);
+      return [entry.filename,doc.format,f.card_id,f.title,f.date||'',f.card_type,pk.species??'',pk.pid_type??'',({0:'fixed_pid',1:'random',2:'always_shiny',3:'never_shiny'})[pk.pid_type]??'',pk.nature??'',IV_ORDER.map(s=>pk[`iv_${s}`]??'').join('/'),pk.language??'',pk.origin_game??'',state.modified.length,diff.length,doc.format.endsWith('full')&&state.modified.length?'yes':'no'];
+    });
+    const csv='\ufeff'+[names,...rows].map(line=>line.map(value=>'"'+String(value??'').replaceAll('"','""')+'"').join(',')).join('\r\n');
+    download('wondercard_audit.csv',csv,'text/csv;charset=utf-8');toast(t('toast.exportCsv',{n:rows.length}));
+  }
+  function init(){
+    const input=$('file-input');const open=()=>input.click();
+    $('open-files-left').addEventListener('click',open);$('open-files-empty').addEventListener('click',open);
+    input.addEventListener('change',async()=>{await importFiles([...input.files]);input.value='';});
+    $('search').addEventListener('input',drawFileList);
+    $('clear-files').addEventListener('click',()=>{files.length=0;selected=-1;render();toast(t('toast.cleared'));});
+    $('export-bin').addEventListener('click',exportBinary);$('export-json').addEventListener('click',exportJson);$('audit-csv').addEventListener('click',auditCsv);
+    $('theme-switch').addEventListener('click',()=>document.body.classList.toggle('light'));
+    window.addEventListener('wc-locale-change',()=>{render();I.translateDom();});
+    document.querySelectorAll('#editor-tabs button').forEach(btn=>btn.addEventListener('click',()=>{
+      activeTab=btn.dataset.tab;document.querySelectorAll('#editor-tabs button').forEach(x=>x.classList.toggle('active',x===btn));
+      for(const name of ['fields','json','audit'])$(name+'-tab').hidden=(activeTab!==name);
+      const state=currentState();if(!state)return;if(activeTab==='json')drawJson(state);if(activeTab==='audit')drawAudit(state);
+    }));
+    document.querySelectorAll('.inspector-nav button').forEach(btn=>btn.addEventListener('click',()=>{
+      inspectorTab=btn.dataset.inspector;document.querySelectorAll('.inspector-nav button').forEach(x=>x.classList.toggle('active',btn===x));$('hex-view').hidden=inspectorTab!=='hex';$('diff-view').hidden=inspectorTab!=='diff';
+    }));
+    document.addEventListener('dragover',e=>{e.preventDefault();document.body.classList.add('dragging');});
+    document.addEventListener('dragleave',e=>{if(!e.relatedTarget)document.body.classList.remove('dragging');});
+    document.addEventListener('drop',async e=>{e.preventDefault();document.body.classList.remove('dragging');if(e.dataTransfer?.files?.length)await importFiles([...e.dataTransfer.files]);});
+    document.addEventListener('keydown',e=>{if(e.ctrlKey&&e.key.toLowerCase()==='o'){e.preventDefault();open();}else if(e.ctrlKey&&e.key.toLowerCase()==='s'){e.preventDefault();exportBinary();}});
+    const bin=atob(window.WC_SAMPLE_B64),bytes=Uint8Array.from(bin,c=>c.charCodeAt(0));
+    importBytes('synthetic_demo.wc6',bytes).then(()=>toast(t('toast.sample'))).catch(e=>toast(e.message,true));
+  }
+  // Public developer API used by automated roundtrip checks and embedders.
+  window.WonderCardStudio={parse,applyChanges,getDiff,importBytes,importJSON,getFiles:()=>files,getLocale:()=>I.getLocale(),setLocale:lang=>I.setLocale(lang),select:index=>{selected=index;render();},currentState};
+  init();
+})();
+</script>
+</body>
+</html>
