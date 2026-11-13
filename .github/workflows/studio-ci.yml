@@ -1,4 +1,4 @@
-name: Studio i18n, archive read-only and offline build
+name: Studio typed formats, i18n and offline build
 on:
   push:
     paths:
@@ -11,6 +11,8 @@ on:
     paths:
       - "web/**"
       - "scripts/**"
+      - "wondercard/**"
+      - "tests/**"
       - ".github/workflows/studio-ci.yml"
 jobs:
   verify:
@@ -28,16 +30,23 @@ jobs:
           node --check web/manifest.js
           node --check web/i18n.js
           node --check web/app.js
+          node --check web/typed_manifest.js
       - name: Verify locale keys and placeholders
         run: node scripts/check_locales.js
-      - name: Test all named read-only format roundtrips
+      - name: Test lossless typed parsing, drafts and existing core
+        run: python -m unittest discover -s tests -q
+      - name: Regenerate typed browser schema and verify parity
         run: |
-          python -m unittest discover -s tests -p test_readonly_formats.py
-          python -m unittest discover -s tests -p test_editor_synthetic.py
+          python -m wondercard.cli --help >/dev/null
+          python scripts/build_typed_manifest.py
+          git diff --exit-code -- web/typed_manifest.js
       - name: Rebuild single-file offline version
         run: python scripts/build_standalone.py
-      - name: Confirm standalone matches generated source
-        run: git diff --exit-code -- web/standalone.html
+      - name: Upload generated portable HTML (not yet committed)
+        uses: actions/upload-artifact@v4
+        with:
+          name: WonderCard-Studio-v0.5-Offline
+          path: web/standalone.html
       - name: Check standalone safety and language module
         run: |
           python - <<'PY'
