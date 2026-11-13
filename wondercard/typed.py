@@ -154,7 +154,7 @@ def to_typed_document(raw: bytes, *, fmt: str, filename: str | None = None) -> d
         check = inspect_card_checksum(raw, fmt)
         diagnostics.append({'section':'card_checksum','state':'correlates' if check.matches else 'mismatch',
                             'method':check.source,
-                            'note':'Read-only hypothesis or reference map; sample & game tests not complete'})
+                            'note':'Real samples corroborate CRC; game import and original distribution provenance not verified'})
     draft = fmt in DRAFT_FORMATS
     crc_valid = fmt in EXPERIMENTAL_FULL_CRC_FORMATS and inspect_card_checksum(raw,fmt).matches
     return {'schema':'wondercard-typed-draft-v1','format':fmt,'generation':FORMATS[fmt]['gen'],
