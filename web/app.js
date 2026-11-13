@@ -365,7 +365,7 @@
     document.addEventListener('drop',async e=>{e.preventDefault();document.body.classList.remove('dragging');if(e.dataTransfer?.files?.length)await importFiles([...e.dataTransfer.files]);});
     document.addEventListener('keydown',e=>{if(e.ctrlKey&&e.key.toLowerCase()==='o'){e.preventDefault();open();}else if(e.ctrlKey&&e.key.toLowerCase()==='s'){e.preventDefault();exportBinary();}});
     const bin=atob(window.WC_SAMPLE_B64),bytes=Uint8Array.from(bin,c=>c.charCodeAt(0));
-    importBytes('0081 XYORAS - デセルシティ Arceus Shiny (JPN).wc6',bytes).then(()=>toast(t('toast.sample'))).catch(e=>toast(e.message,true));
+    importBytes('synthetic_demo.wc6',bytes).then(()=>toast(t('files.imported',{n:1}))).catch(e=>toast(e.message,true));
   }
   // Public developer API used by automated roundtrip checks and embedders.
   window.WonderCardStudio={parse,applyChanges,getDiff,importBytes,importJSON,getFiles:()=>files,getLocale:()=>I.getLocale(),setLocale:lang=>I.setLocale(lang),select:index=>{selected=index;render();},currentState};
