@@ -470,7 +470,18 @@ export const rows = [
     "等級",
     "Level",
     "レベル"
-  ]
+  ],
+  ["field.length","长度：{length} 字节","長度：{length} 位元組","Length: {length} bytes","長さ: {length} バイト"],
+  ["error.sha","源文件 SHA-256 不一致，拒绝导入","來源檔 SHA-256 不符，拒絕匯入","Source SHA-256 mismatch; import refused","元データ SHA-256 が一致しないため読み込みを拒否"],
+  ["error.baseline","JSON 的原始字段基线遭到修改","JSON 的原始欄位基線已遭修改","JSON baseline fields were modified","JSON の元フィールド値が変更されています"],
+  ["error.patch","JSON 字节补丁与字段修改不一致","JSON 位元組補丁與欄位變更不符","JSON patch bytes do not match edited fields","JSON パッチのバイト列がフィールド変更と一致しません"],
+  ["error.hex","HEX 值必须是两位 00–FF","HEX 值必須是兩位 00–FF","HEX value must be two digits 00–FF","HEX 値は 00〜FF の2桁で指定してください"],
+  ["error.date","日期编码无效或超出范围","日期編碼無效或超出範圍","Invalid or out-of-range date encoding","日付コードが無効か範囲外です"],
+  ["error.readonly","该字段或字节暂未获得安全写入权限","此欄位或位元組尚未開放安全寫入","This field/byte is not writable","このフィールド/バイトへの書き込みは許可されていません"],
+  ["error.large","导入文件超出允许大小","匯入檔案超出允許大小","Imported file exceeds size limit","読み込みファイルがサイズ制限を超えています"],
+  ["error.exists","已存在同名文件或选择了源文件，禁止覆盖","同名檔案已存在或選到了來源檔，禁止覆寫","Target exists or is source file; overwrite is disabled","保存先が既存または元ファイルのため上書き禁止"],
+  ["error.json","JSON 文件结构或字段无效","JSON 檔案結構或欄位無效","Invalid JSON structure or field","JSON の構造またはフィールドが無効です"],
+  ["error.generic","操作失败：{detail}","操作失敗：{detail}","Operation failed: {detail}","操作に失敗しました: {detail}"]
 ] as const;
 export type TextKey = typeof rows[number][0];
 const catalogs: Record<Locale,Record<string,string>>={
@@ -495,4 +506,19 @@ export function reasonFor(lang:Locale,format:string|null,candidateCount:number,f
   if(!format)return t(lang,"reason.unknown");
   void filename;
   return t(lang,"reason.basic");
+}
+
+/** Common safety validation errors localized; unknown errors retain diagnostic details. */
+export function localizedError(lang:Locale,error:unknown):string {
+  const detail=error instanceof Error?error.message:String(error);
+  if(/SHA-256/i.test(detail))return t(lang,"error.sha");
+  if(/Baseline field|baseline_fields/i.test(detail))return t(lang,"error.baseline");
+  if(/Patch byte manifest|Patch bytes/i.test(detail))return t(lang,"error.patch");
+  if(/HEX byte must|two hex digits/i.test(detail))return t(lang,"error.hex");
+  if(/Invalid raw date|日期|ISO date|date encoding|WC7 年份/i.test(detail))return t(lang,"error.date");
+  if(/只读|不可编辑|writable field|writable whitelist|outside writable|not writable|禁止修改/i.test(detail))return t(lang,"error.readonly");
+  if(/oversized|too large|过大/i.test(detail))return t(lang,"error.large");
+  if(/已存在|覆盖原始|already exists|Target exists|overwrite/i.test(detail))return t(lang,"error.exists");
+  if(/JSON syntax|JSON schema|Invalid JSON|Missing JSON|Fields structure/i.test(detail))return t(lang,"error.json");
+  return t(lang,"error.generic",{detail});
 }

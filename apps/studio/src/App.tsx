@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type DragEvent } from "react";
 import { Braces, FileDown, FilePlus2, FolderOpen, Lock, Moon, Redo2, RotateCcw, Save, Search, ShieldCheck, Sun, Undo2, WandSparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {LANGUAGES,labelForField,reasonFor,t,type Locale} from "@/i18n";
+import {LANGUAGES,labelForField,localizedError,reasonFor,t,type Locale} from "@/i18n";
 import {applyDocumentJson} from "@/lib/json";
 import { HexPane } from "@/components/HexPane";
 import {
@@ -50,7 +50,7 @@ function FieldRow({doc,field,selected,onSelect,onEdit,locale}:{
       onBlur={commit} onKeyDown={e=>{if(e.key==="Enter")e.currentTarget.blur();}}
       disabled={!field.editable}
     />
-    <span className="fieldOffset" title={"长度："+field.length+" bytes"}>{"0x"+field.offset.toString(16).toUpperCase()}</span>
+    <span className="fieldOffset" title={t(locale,"field.length",{length:field.length})}>{"0x"+field.offset.toString(16).toUpperCase()}</span>
   </div>;
 }
 const codeHex=(n:number)=>"0x"+n.toString(16).toUpperCase().padStart(3,"0");
@@ -104,10 +104,10 @@ export default function App() {
       const chosen=await chooseLocalFiles();
       if(chosen!==null) {importItems(chosen);return;}
       fileInput.current?.click();
-    }catch(error) {setMessage(String(error));}
+    }catch(error) {setMessage(localizedError(locale,error));}
   }
   async function browserFiles(files:File[]) {
-    try{importItems(await fromBrowserFiles(files));}catch(error){setMessage(String(error));}
+    try{importItems(await fromBrowserFiles(files));}catch(error){setMessage(localizedError(locale,error));}
   }
   function editActive(key:string,value:FieldValue) {
     if(!doc)return;
@@ -115,7 +115,7 @@ export default function App() {
       const changedDoc=edit(doc,key,value);
       setDocuments(list=>list.map(x=>x.id===doc.id?changedDoc:x));
       setMessage(changedDoc===doc?"":t(locale,"message.edited",{field:key}));
-    }catch(error){setMessage(String(error));}
+    }catch(error){setMessage(localizedError(locale,error));}
   }
   function updateByte(offset:number,value:number) {
     if(!doc)return;
@@ -123,7 +123,7 @@ export default function App() {
       const updated=editByte(doc,offset,value);
       setDocuments(list=>list.map(x=>x.id===doc.id?updated:x));
       setMessage(t(locale,"message.byteEdited",{offset:"0x"+offset.toString(16).toUpperCase()}));
-    } catch(error) {setMessage(String(error));}
+    } catch(error) {setMessage(localizedError(locale,error));}
   }
   async function applyJson(text:string) {
     if(!doc)return;
@@ -131,7 +131,7 @@ export default function App() {
       const updated=await applyDocumentJson(doc,text);
       setDocuments(list=>list.map(x=>x.id===doc.id?updated:x));
       setMessage(t(locale,"message.applied"));
-    } catch(error) {setMessage(String(error));}
+    } catch(error) {setMessage(localizedError(locale,error));}
   }
   function changeHistory(direction:"undo"|"redo") {
     if(!doc)return;
@@ -142,7 +142,7 @@ export default function App() {
   async function performSave(kind:"wc"|"json") {
     if(!doc)return;
     try{if(await saveAs(doc,kind))setMessage(t(locale,"message.saved"));}
-    catch(error){setMessage(String(error));}
+    catch(error){setMessage(localizedError(locale,error));}
   }
   function onDrop(event:DragEvent<HTMLElement>) {
     event.preventDefault();

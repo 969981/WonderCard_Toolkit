@@ -1,5 +1,5 @@
 import {describe,it,expect} from "vitest";
-import {LANGUAGES,rows,t,reasonFor} from "./i18n";
+import {LANGUAGES,rows,t,reasonFor,localizedError} from "./i18n";
 describe("Pro Editor four-language UI",()=>{
  it("has exactly four complete catalogs with distinct strings",()=>{
    expect(LANGUAGES).toEqual(["zh-CN","zh-TW","en","ja"]);
@@ -20,5 +20,7 @@ describe("Pro Editor four-language UI",()=>{
  it("translates read-only gates, not binary data",()=>{
    expect(reasonFor("en","wc6full",1,"x.wc6full")).toContain("Full");
    expect(t("zh-TW","editor.fields")).toContain("檢查器");
+   expect(localizedError("en",new Error("Raw snapshot SHA-256 mismatch"))).toContain("SHA-256");
+   expect(localizedError("ja",new Error("HEX byte must be 00..FF"))).toContain("HEX");
  });
 });
