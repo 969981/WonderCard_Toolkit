@@ -16,7 +16,7 @@ npm test                   # Vitest
 npm run build              # static Web UI
 npm run test:legacy        # Python stdlib unittest for old core
 npm run tauri -- dev       # requires Rust+desktop dependencies
-npm run tauri -- build     # Windows installer, not validated until CI passes
+npm run tauri -- build     # Windows installer; CI build passed, runtime smoke still needed
 ```
 
 The `apps/studio/src-tauri` project is a Tauri 2 desktop shell with dialog-selected file access. There is no HTTP backend or runtime Python requirement.
@@ -31,7 +31,7 @@ The `apps/studio/src-tauri` project is a Tauri 2 desktop shell with dialog-selec
 - Dark/light theme, shadcn-style project-owned Button component and Tailwind v4;
 - Full and unknown formats remain read-only (unaltered export available).
 
-**Not validated:** Windows installer build, all true event-card game behavior, Full checksum, production-grade atomic save, four-language UI parity, large-scale batch audit, full professional HEX editing. Unlike v0.3, new editor is initially zh-CN with some English technical labels; internationalization migration is a separate task.
+**Not validated:** Windows interactive launch/open/save smoke (installer **build** passed CI), all true event-card game behavior, Full checksum, production-grade atomic save, four-language UI parity, large-scale batch audit, full professional HEX editing. Unlike v0.3, new editor is initially zh-CN with some English technical labels; internationalization migration is a separate task.
 
 ## Safety / known technical limits
 
@@ -41,6 +41,10 @@ The `apps/studio/src-tauri` project is a Tauri 2 desktop shell with dialog-selec
 - No overwriting an existing destination in Tauri at this stage; atomic temp-file rename and failure recovery is future PE-012 work. The save dialog grants only session-scoped file access; permission scope is not global.
 - The included demo card is synthetic, not an official Mystery Gift event.
 - No automatic fetch, telemetry, cloud upload or bundled EventsGallery.
+
+## CI and Windows artifact
+
+The current Pro Editor run passed frontend typecheck, Vitest, production build and Windows NSIS bundling: [GitHub Actions #43346556664](https://github.com/969981/WonderCard_Toolkit/actions/runs/43346556664). Open the run's **Artifacts** section and download `wondercard-pro-editor-windows-alpha`. An installer exists, but it is an unsigned experimental Alpha: do not confuse successful compilation with verified runtime behavior. The generated artifact is temporary and may expire.
 
 ## Development tasks
 See [Pro Editor implementation backlog](../../docs/pro-editor/BACKLOG.md) and [tracking issue](https://github.com/969981/WonderCard_Toolkit/issues/17).

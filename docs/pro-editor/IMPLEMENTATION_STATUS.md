@@ -17,7 +17,7 @@
 - **新版 TypeScript 类型检查：通过**。
 - **新版 Vitest：通过**（原始快照不变、date/level 字节差异、Undo/Redo、Full 与歧义写锁）。
 - **新版 Vite production build：通过**。此前 Monaco worker 路径错误已经修复；证据见 [Pro Editor checks #43346556664](https://github.com/969981/WonderCard_Toolkit/actions/runs/43346556664)。
-- **Windows Tauri / NSIS：在本次记录时仍处于 Actions 构建中；不能标记成功**。同一个 run 中的 `windows-bundle` job 结束后再以实际产物验收。
+- **Windows Tauri 2 / NSIS 自动构建：通过**。[Pro Editor checks #43346556664](https://github.com/969981/WonderCard_Toolkit/actions/runs/43346556664) 的 `windows-bundle` job 成功，上传了 artifact `wondercard-pro-editor-windows-alpha`（约 5.1 MB，artifact ID 14001713456）。这只证明 Windows 构建和上传成功，**不等于手动启动/文件权限/实际保存操作都已验收**。
 
 ## 未完成 / 不能宣称
 
@@ -26,7 +26,7 @@
 | PE-001 旧版兼容基线 | 部分 | UI 截图与 Python/JS 真值检查 |
 | PE-002 shared parity fixtures | 部分 | 跨 JS/Python/TS 字段和 SHA 对照报告 |
 | PE-003 React/UI 工程 | 首个代码和生产构建通过 | 更多组件及界面交互测试 |
-| PE-004 Tauri Windows | 源码已提交 | 本机/CI Windows 构建与文件权限烟雾测试 |
+| PE-004 Tauri Windows | NSIS CI 构建通过 | Windows 实机启动、文件权限和存储流程 smoke |
 | PE-005 PatchSet & FormatRegistry | 原型实现 | 独立共享包及 schema 与校验策略 |
 | PE-006 WC6/WC7 | 合成样本通过 | 授权实卡、PKHeX 字段/byte parity |
 | PE-007 Undo/Redo | 基础实现 | UI E2E，跨文件/异常操作 |
@@ -35,7 +35,7 @@
 | PE-011 Diff/Monaco | ByteDiff + JSON 预览 | Monaco Diff、经过验证的 JSON 反向导入 |
 | PE-012 Save As | 实验性实现 | 原子写盘、磁盘故障回滚、真实 Windows IO |
 | PE-013 i18n | 旧版四语完整，新版尚未迁移 | 四语新 UI 字段/快捷键 |
-| PE-014 Windows CI | Web CI 通过 | NSIS 真实产物和启动检查 |
+| PE-014 Windows CI | Web+NSIS CI 构建通过，artifact 已上传 | 实际运行/文件打开保存的 E2E 启动检查 |
 | PE-015+ 全世代/批量/Gallery | 未开始 | 按 L0–L5 格式矩阵逐个开放 |
 
 ## 原则
