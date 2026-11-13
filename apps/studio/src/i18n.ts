@@ -1,3 +1,5 @@
+import {isTypedFormat} from "./lib/typed-v07";
+
 /** Four-language UI catalogs (UI only; never change card language fields). */
 export const LANGUAGES = ["zh-CN","zh-TW","en","ja"] as const;
 export type Locale = typeof LANGUAGES[number];
@@ -395,6 +397,13 @@ export const rows = [
     "未知の形式またはサイズ不一致"
   ],
   [
+    "reason.typedReadonly",
+    "v0.7 字段结构预览：只读，尚未通过桌面版修改写回验收",
+    "v0.7 欄位結構預覽：唯讀，桌面版修改寫回尚未驗收",
+    "v0.7 typed schema preview: read-only; desktop modified export unverified",
+    "v0.7 型付きスキーマのプレビュー：読み取り専用、変更後の保存は未検証"
+  ],
+  [
     "reason.basic",
     "依据扩展名与长度识别，仅对已验证字段开放写入",
     "依副檔名與長度辨識，僅已驗證欄位可寫入",
@@ -501,6 +510,7 @@ export function labelForField(lang:Locale,fieldId:string,fallback:string):string
   return key in catalogs[lang] ? catalogs[lang][key] : fallback;
 }
 export function reasonFor(lang:Locale,format:string|null,candidateCount:number,filename:string):string {
+  if(format && isTypedFormat(format))return t(lang,"reason.typedReadonly");
   if(format?.endsWith("full"))return t(lang,"reason.full");
   if(!format && candidateCount)return t(lang,"reason.ambiguous");
   if(!format)return t(lang,"reason.unknown");
