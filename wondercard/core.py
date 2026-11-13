@@ -17,7 +17,9 @@ from typing import Any
 CORE_SIZE = 0x108
 FULL_SIZE = 0x310
 FULL_CORE_START = 0x208
-FORMAT_SET = {"wc6", "wc7", "wc6full", "wc7full"}
+EDITABLE_FORMAT_SET = {"wc6", "wc7", "wc6full", "wc7full"}
+from .registry import READ_ONLY, resolve_named_format, to_raw_document, from_raw_document
+FORMAT_SET = EDITABLE_FORMAT_SET | set(READ_ONLY)
 SHINY_MODES = {0: "fixed_pid", 1: "random", 2: "always_shiny", 3: "never_shiny"}
 IV_ORDER = ("hp", "atk", "def", "spe", "spa", "spd")
 
@@ -102,6 +104,8 @@ def _get_format(name: str | None, blob: bytes, explicit: str | None = None) -> s
                 fmt = "wc6" if 20000000 <= raw <= 21001231 else "wc7"
             else:
                 raise ValueError("Unknown extension; use --format wc6/wc7/wc6full/wc7full")
+    if fmt in READ_ONLY:
+        return resolve_named_format(name, blob, fmt).name
     expected = FULL_SIZE if fmt.endswith("full") else CORE_SIZE
     if len(blob) != expected:
         raise ValueError(f"{fmt} needs {expected} bytes (got {len(blob)})")
@@ -210,6 +214,8 @@ def inspect_bytes(blob: bytes, fmt: str) -> dict[str, Any]:
 
 def to_document(blob: bytes, *, filename: str | None = None, fmt: str | None = None) -> dict[str, Any]:
     actual = _get_format(filename, blob, fmt)
+    if actual in READ_ONLY:
+        return to_raw_document(blob, filename=filename, fmt=actual)
     parsed = _fields(blob, actual)
     return {
         "schema": "wondercard-toolkit-v1",
@@ -237,6 +243,8 @@ def _flatten(p: dict[str, Any], prefix: str = "") -> dict[str, Any]:
 
 
 def from_document(doc: dict[str, Any], *, crc_policy: str = "keep") -> bytes:
+    if doc.get("schema") == "wondercard-toolkit-raw-v1":
+        return from_raw_document(doc)
     if doc.get("schema") != "wondercard-toolkit-v1":
         raise ValueError("Unsupported JSON schema")
     fmt = doc.get("format")
@@ -280,6 +288,8 @@ def roundtrip_check(blob: bytes, fmt: str) -> bool:
 
 def audit_blob(blob: bytes, fmt: str) -> dict[str, Any]:
     doc = to_document(blob, fmt=fmt)
+    if fmt in READ_ONLY:
+        return {"format": fmt, "sha256": doc["source_sha256"], "roundtrip_ok": roundtrip_check(blob, fmt), "warnings": doc["warnings"], "capability": doc["capability"]}
     fields, preview = doc["fields"], doc["preview"]
     warnings = []
     if fields["date"] is None:
