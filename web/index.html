@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>WonderCard Studio · 配信卡编辑器</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <a class="brand" href="#" aria-label="WonderCard Studio">
+      <span class="brand-icon">W</span>
+      <span><strong>WonderCard</strong><small>STUDIO / v0.2</small></span>
+    </a>
+    <div class="side-heading"><span data-i18n="side.workspace">工作区</span> <span class="muted">LOCAL ONLY</span></div>
+    <button id="open-files-left" class="primary full"><span class="ico">＋</span> <span data-i18n="side.import">导入配信卡</span></button>
+    <div class="folder-meta"><span id="file-count">0 个文件</span><button id="clear-files" class="text-btn" data-i18n-title="side.clear" title="清除文件列表"><span data-i18n="side.clear">清空</span></button></div>
+    <input id="search" class="search" data-i18n-placeholder="search.placeholder" placeholder="⌕ 搜索卡片 / ID / 文件名" autocomplete="off">
+    <div id="file-list" class="file-list" role="listbox" data-i18n-aria-label="top.library" aria-label="配信卡文件列表"></div>
+    <div class="side-bottom">
+      <div class="privacy"><span class="online"></span> <span data-i18n="side.local">本地离线运行</span></div>
+      <p data-i18n="side.privacy">文件仅在当前浏览器中处理，不上传到服务器。</p>
+      <div class="hint-link">WC6 · WC7 · FULL</div>
+    </div>
+  </aside>
+  <main class="main">
+    <div class="topbar">
+      <div class="breadcrumbs"><span data-i18n="top.library">文件库</span><span> / </span> <b data-i18n="top.workspace">配信卡工作台</b></div>
+      <div class="top-actions">
+        <label class="language-control"><span class="sr-only" data-i18n="top.language">界面语言</span><select id="locale-switch" data-i18n-aria-label="top.language" aria-label="Interface language"><option value="zh-CN">简体中文</option><option value="zh-TW">繁體中文</option><option value="en">English</option><option value="ja">日本語</option></select></label><button id="theme-switch" class="icon-button" data-i18n-title="top.theme" title="切换深浅色模式">☼</button>
+        <span class="top-divider"></span>
+        <button id="export-json" class="btn subtle" data-i18n="top.json">导出 JSON</button>
+        <button id="export-bin" class="btn primary"><span aria-hidden="true">↧ </span><span data-i18n="top.binary">导出 WC 文件</span></button>
+      </div>
+    </div>
+    <div class="workspace">
+      <div class="work-head">
+        <div><div class="eyebrow">MYSTERY GIFT RESEARCH WORKSPACE</div><h1><span data-i18n="app.title">配信卡编辑器</span> <span class="version">BETA 0.2</span></h1><p data-i18n="workspace.description">查看、编辑和审计第六 / 第七世代 Wonder Card。保留未知字节，非破坏性写回。</p></div>
+        <button id="audit-csv" class="btn outline"><span aria-hidden="true">⇩ </span><span data-i18n="workspace.auditCsv">导出批量审计 CSV</span></button>
+      </div>
+      <div id="toast" class="toast" role="status" aria-live="polite"></div>
+      <div id="drop-indicator" class="drop-indicator" data-i18n="drop.label">将 .wc6 / .wc7 / .wc6full / .wc7full 或 JSON 文件拖放到此处</div>
+      <div id="empty-state" hidden class="empty-state"><div class="empty-icon">▧</div><h2 data-i18n="empty.heading">导入你的第一张配信卡</h2><p data-i18n="empty.description">支持一次选择多个文件。也可以直接拖放文件到窗口中。</p><button id="open-files-empty" class="btn primary" data-i18n="empty.open">选择文件</button></div>
+      <div id="editor" class="editor-layout">
+        <section class="editor-center">
+          <div class="card-hero">
+            <div class="hero-mark"><div class="ball-circle"><div class="ball-bar"></div><div class="ball-center"></div></div><div class="hero-kicker">WONDER CARD · <span id="hero-gen">GEN VI</span></div><div class="hero-sub" data-i18n="hero.gift">MYSTERY GIFT DISTRIBUTION</div></div>
+            <div class="hero-main"><div class="hero-label"><span class="pill active" id="hero-format">WC6</span><span class="pill" id="hero-kind">POKÉMON</span><span id="dirty-pill" class="pill changed" hidden>● <span data-i18n="hero.changed">已修改</span></span></div><h2 id="card-title">配信卡</h2><p id="card-subtitle">—</p><div class="hero-facts"><div><span data-i18n="hero.id">卡片编号</span><b id="hero-id">—</b></div><div><span data-i18n="hero.date">接收日期</span><b id="hero-date">—</b></div><div><span data-i18n="hero.size">文件长度</span><b id="hero-size">—</b></div></div></div>
+          </div>
+          <nav id="editor-tabs" class="tabs" aria-label="编辑器选项卡"><button class="tab active" data-tab="fields">✎ <span data-i18n="tab.fields">字段编辑</span></button><button class="tab" data-tab="json">⌘ <span data-i18n="tab.json">JSON 数据</span></button><button class="tab" data-tab="audit">▤ <span data-i18n="tab.audit">审计与验证</span></button></nav>
+          <section id="fields-tab" class="tab-panel">
+            <div class="section-head"><h3 data-i18n="section.header">基础信息</h3><span>卡片头部 · HEADER</span></div><div id="fields-header" class="form-grid"></div>
+            <div id="pokemon-section"><div class="section-head"><h3 data-i18n="section.pokemon">宝可梦设定</h3><span>POKÉMON TEMPLATE</span></div><div id="fields-pokemon" class="form-grid"></div></div>
+            <div id="item-section" hidden><div class="section-head"><h3 data-i18n="section.item">道具设定</h3><span>ITEM GIFT</span></div><div id="fields-item" class="form-grid"></div></div>
+            <div id="full-section" hidden><div class="section-head"><h3 data-i18n="section.full">Full 配信控制字段</h3><span>READ-ONLY VALIDATION REQUIRED</span></div><div id="fields-full" class="form-grid"></div><p class="warning" data-i18n="full.warning">Full 格式修改后的 CRC 生成规则尚未经过真实样本外部验证，本工具只允许原样导出 Full。</p></div>
+          </section>
+          <section id="json-tab" class="tab-panel" hidden><div class="section-head"><h3 data-i18n="section.json">结构化 JSON</h3><span>COMPATIBLE WITH TOOLKIT v0.1</span></div><p class="tip" data-i18n="json.tip">下方展示当前字段及基线原始字节。可复制或导出 JSON。修改请在「字段编辑」中进行，避免破坏未解析内容。</p><pre id="json-text" class="json-pre"></pre></section>
+          <section id="audit-tab" class="tab-panel" hidden><div class="section-head"><h3 data-i18n="section.audit">审计与一致性</h3><span>INTEGRITY REPORT</span></div><div id="audit-items" class="audit-list"></div><div class="section-head"><h3 data-i18n="section.history">变更记录</h3><span>BYTE-LEVEL DIFF</span></div><div id="audit-diff" class="diff-list"></div></section>
+        </section>
+        <aside class="inspector">
+          <div class="inspector-head"><div><span class="inspector-kicker">BINARY INSPECTOR</span><h3 data-i18n="inspector.title">十六进制检查器</h3></div><span id="hex-count" class="hex-count">0 改动</span></div>
+          <div class="inspector-nav"><button data-inspector="hex" class="active">HEX VIEW</button><button data-inspector="diff">DIFF VIEW</button></div>
+          <div id="hex-view" class="hex-view"></div><div id="diff-view" class="diff-view" hidden></div>
+          <div class="inspector-footer"><span class="status-dot"></span> <span id="hex-validation">字节保真 · 待检查</span><p data-i18n="inspector.red">红色高亮 = 修改字节 · 点击字节可查看偏移</p></div>
+        </aside>
+      </div>
+    </div>
+  </main>
+</div>
+<input type="file" id="file-input" hidden multiple accept=".wc6,.wc7,.wc6full,.wc7full,.json">
+<script src="manifest.js"></script><script src="i18n.js"></script><script src="app.js"></script>
+</body>
+</html>
