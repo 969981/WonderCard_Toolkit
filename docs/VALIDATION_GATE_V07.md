@@ -25,3 +25,11 @@
 - [EventsGallery](https://github.com/projectpokemon/EventsGallery)
 
 仅参考公开数据格式和算法行为；不复制 PKHeX 源码、不将未经授权的配信卡直接加入仓库。没有真实跨实现验证时一律标注 *unverified*。
+
+## 2026-11-13 真实配信卡复核和实验性扩展
+
+GitHub Actions [#43379643616](https://github.com/969981/WonderCard_Toolkit/actions/runs/43379643616) 对 EventsGallery 中 11 个原始文件完成只读取和无损往返：WC8 2 张、WB8 2 张、WA8 2 张、WC9 3 张、WA9 2 张。WC8 在 0x2CC、WC9 在 0x2C4、WA9 在 0x2C0 的全文件 CRC16-CCITT-FALSE（校验字段清零）分别在所有真实样本中匹配。
+
+后续 [真实样本修改回归](https://github.com/969981/WonderCard_Toolkit/actions/runs/43380615181) 在 **7 张** WC8/WC9/WA9 样本中实际进行了白名单字段修改（宝可梦等级 / 道具数量）及 CRC 回写，仅在内存中处理，差异限定为字段本身与 CRC，重新解析与校验通过。
+
+**因此 WC8 和 WA9 与原有 WC9 一样，新增受限实验性 L4 写回；不等于官方配信一致或游戏可用性 L5。** 卡片 ID、原训练家 ID、物种内部索引、未知字段仍不能作为正式可写字段；源 CRC 错误继续锁写。WB8、WA8、Gen4/5 仍只读。专业 React/Tauri 安装版 Windows 原生文件打开/保存测试尚未完成。
