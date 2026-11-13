@@ -50,6 +50,9 @@ jobs:
         shell: pwsh
         continue-on-error: true
         run: ./scripts/windows_native_launch_smoke.ps1
+      - name: NSIS installed application launch smoke
+        shell: pwsh
+        run: ./scripts/windows_installed_smoke.ps1
       - uses: actions/upload-artifact@v4
         if: success()
         with:
