@@ -45,3 +45,13 @@ python scripts/build_standalone.py
 - [Project Pokémon EventsGallery](https://github.com/projectpokemon/EventsGallery) — Released / Unreleased、Gen 1–9 配信档案索引；**不默认打包或重新分发整个档案库**。
 
 > 此仓库中的文档是开发规格，不代表已实现全部功能。每项能力以真实样本和自动化回归测试为验收依据。
+
+## v0.4 — Nine UI locales + safe archive viewer (PR pending)
+
+WonderCard Studio has **nine UI languages**: 简体中文, 繁體中文, English, 日本語, Français, Deutsch, Italiano, Español, 한국어. Language changes are display-only and never change Wonder Card bytes.
+
+**Gen6/7 WC6/WC7 remains the only template field editor.** PGT, PCD/WC4, PGF, WC5Full, PL6, WB7/WR7, WC8/WB8/WA8, WC9/WA9 (plus named aliases) now have **read-only** import, HEX inspection, lossless JSON and original binary export by extension + byte length. **No Gen4/5/8/9 field editor or checksum verification is claimed.** See [archive support notes](docs/ARCHIVE_READONLY.md) and [i18n](docs/I18N.md).
+
+The built-in demonstration is synthetic and not an official event card. The original imported file is never overwritten. Modified WC6Full/WC7Full export is blocked in the browser until the checksum rules are verified against real samples.
+
+Development branches are not automatically merged. Run `node scripts/check_locales.js`, `python -m unittest discover -s tests -p test_editor_synthetic.py`, `python -m unittest discover -s tests -p test_readonly_formats.py`, and `python scripts/build_standalone.py` to reproduce the checks.
