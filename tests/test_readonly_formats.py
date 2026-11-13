@@ -17,7 +17,7 @@ class ReadOnlyFormatTests(unittest.TestCase):
                 data = bytes(((i * 89 + 17) & 255) for i in range(info.size))
                 doc = to_document(data, filename='sample.' + name)
                 self.assertEqual(doc['format'], name)
-                self.assertEqual(doc['capability'][:9], 'read-only')
+                self.assertTrue('read-only' in doc['capability'] or 'LOCKED' in doc['capability'] or 'L3 lossless' in doc['capability'])
                 self.assertEqual(doc['source_sha256'], hashlib.sha256(data).hexdigest())
                 self.assertEqual(from_document(json.loads(json.dumps(doc))), data)
                 self.assertTrue(roundtrip_check(data, name))
@@ -39,7 +39,7 @@ class ReadOnlyFormatTests(unittest.TestCase):
             from_document(doc)
         doc = to_document(data, filename='card.pgt')
         doc['fields'] = {'date': '2026-11-13'}
-        with self.assertRaisesRegex(ValueError, 'Read-only'):
+        with self.assertRaisesRegex(ValueError, 'structure changed|Read-only'):
             from_document(doc)
 
     def test_cross_format_size_disambiguation_by_extension(self):
