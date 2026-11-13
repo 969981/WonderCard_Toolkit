@@ -5,7 +5,7 @@ on:
       - "web/**"
       - "scripts/**"
       - "wondercard/**"
-      - "tests/test_readonly_formats.py"
+      - "tests/**"
       - ".github/workflows/studio-ci.yml"
   pull_request:
     paths:
