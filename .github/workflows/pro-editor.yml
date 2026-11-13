@@ -43,6 +43,8 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - run: npm install --no-audit --no-fund
       - run: npm run tauri -- build
+      - name: Verify atomic save Rust native unit tests (Windows)
+        run: cargo test --manifest-path apps/studio/src-tauri/Cargo.toml --release --lib
       # Native process launch is useful smoke evidence, but not an interactive dialog test.
       - name: Windows native launch smoke
         shell: pwsh
