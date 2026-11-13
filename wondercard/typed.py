@@ -12,7 +12,8 @@ from hashlib import sha256
 from pathlib import Path
 import struct
 from typing import Any
-from .integrity import verify_wc9_checksum, update_wc9_checksum
+from .integrity import verify_wc9_checksum, update_wc9_checksum, inspect_card_checksum
+from .gen4crypto import inspect_pk4_gift
 
 # Field entries are: name, little-endian kind, raw offset. Species for Gen9
 # means *internal* species ID, not a national dex number. CardType is structural
@@ -126,9 +127,10 @@ def _groups(raw: bytes, fmt: str) -> dict:
         result['pokemon'] = _decode(raw,spec['pokemon'])
     if spec.get('checksum') is not None:
         result['integrity'] = {'stored_checksum':struct.unpack_from('<H',raw,spec['checksum'])[0]}
-        if fmt == 'wc9':
-            check = verify_wc9_checksum(raw)
-            result['integrity'].update(calculated_checksum=check.computed,checksum_valid=check.matches)
+        check = inspect_card_checksum(raw, fmt)
+        if check is not None:
+            result['integrity'].update(calculated_checksum=check.computed,
+                                       checksum_valid=check.matches)
     return result
 
 
@@ -138,12 +140,26 @@ def to_typed_document(raw: bytes, *, fmt: str, filename: str | None = None) -> d
     if len(raw) != FORMATS[fmt]['size']:
         raise ValueError(f'{fmt} expects {FORMATS[fmt]["size"]} bytes, got {len(raw)}')
     f = _groups(raw,fmt)
+    diagnostics = []
+    if fmt in ('pgt','pcd','wc4'):
+        inspection = inspect_pk4_gift(raw)
+        diagnostics.append({'section':'embedded_pk4','state':inspection.state,
+                            'checksum_stored':inspection.checksum_stored,
+                            'checksum_computed':inspection.checksum_calculated,
+                            'species':inspection.species,
+                            'personality':inspection.personality,
+                            'note':inspection.reason})
+    if fmt in ('wc8','wa9','wc5full'):
+        check = inspect_card_checksum(raw, fmt)
+        diagnostics.append({'section':'card_checksum','state':'correlates' if check.matches else 'mismatch',
+                            'method':check.source,
+                            'note':'Read-only hypothesis or reference map; sample & game tests not complete'})
     draft = fmt in DRAFT_FORMATS
     crc_valid = fmt == 'wc9' and verify_wc9_checksum(raw).matches
     return {'schema':'wondercard-typed-draft-v1','format':fmt,'generation':FORMATS[fmt]['gen'],
             'source_filename':Path(filename).name if filename else None,
             'source_sha256':sha256(raw).hexdigest(),'byte_length':len(raw),'raw_hex':raw.hex(),
-            'fields':f,'baseline_fields':deepcopy(f),'preview':{'generation':FORMATS[fmt]['gen'],'gift_type':f['card'].get('card_type',f['card'].get('gift_type')),'card_id':f['card'].get('card_id'),'species':f.get('pokemon',{}).get('species',f.get('pokemon',{}).get('species_internal'))},
+            'fields':f,'baseline_fields':deepcopy(f),'diagnostics':diagnostics,'preview':{'generation':FORMATS[fmt]['gen'],'gift_type':f['card'].get('card_type',f['card'].get('gift_type')),'card_id':f['card'].get('card_id'),'species':f.get('pokemon',{}).get('species',f.get('pokemon',{}).get('species_internal'))},
             'capability':('L4 experimental WC9 editing with verified original CRC' if crc_valid else
                           'L2 semantic read + draft patches only; modified binary export LOCKED' if draft else 'L2 semantic read; L3 lossless no-op only'),
             'warnings':(['CRC verified; edited card is a custom template. Official provenance / game import are NOT verified.'] if crc_valid else
