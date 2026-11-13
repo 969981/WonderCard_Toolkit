@@ -1,4 +1,8 @@
 name: Pro Editor checks
+# Push and Draft PR may target the same branch; keep only the latest build.
+concurrency:
+  group: pro-editor-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
 on:
   push:
     branches: [feature/pro-editor-shadcn-tauri]
