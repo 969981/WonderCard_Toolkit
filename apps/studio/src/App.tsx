@@ -1,9 +1,11 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type DragEvent } from "react";
 import { Braces, FileDown, FilePlus2, FolderOpen, Lock, Moon, Redo2, RotateCcw, Save, Search, ShieldCheck, Sun, Undo2, WandSparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {LANGUAGES,labelForField,reasonFor,t,type Locale} from "@/i18n";
+import {applyDocumentJson} from "@/lib/json";
 import { HexPane } from "@/components/HexPane";
 import {
-  CORE_SIZE, createDocument, currentBytes, descriptors, diff, edit, hasChanges, readField,
+  CORE_SIZE, createDocument, currentBytes, descriptors, diff, edit, editByte, hasChanges, readField,
   redo, undo, type FieldSpec, type FieldValue, type RawDocument
 } from "@/lib/wondercard";
 import { chooseLocalFiles, fromBrowserFiles, saveAs, type ImportedFile } from "@/lib/storage";
@@ -22,8 +24,8 @@ function createSyntheticCard(): ImportedFile {
   return {filename:"synthetic-demo.wc6",bytes:raw};
 }
 
-function FieldRow({doc,field,selected,onSelect,onEdit}:{
-  doc:RawDocument;field:FieldSpec;selected:boolean;
+function FieldRow({doc,field,selected,onSelect,onEdit,locale}:{
+  doc:RawDocument;field:FieldSpec;selected:boolean;locale:Locale;
   onSelect:()=>void;onEdit:(value:FieldValue)=>void
 }) {
   const format=doc.detection.format!;
@@ -35,14 +37,15 @@ function FieldRow({doc,field,selected,onSelect,onEdit}:{
       field.kind==="string" ? draft : draft.trim()===""?NaN:Number(draft);
     if (String(value??"")!==draft) onEdit(target);
   };
-  const fieldLabel=field.label + (field.editable?"":"（只读）");
+  const translated=labelForField(locale,field.key,field.label);
+  const fieldLabel=translated + (field.editable?"":" ("+t(locale,"editor.readonly")+")");
   return <div className={"fieldRow"+(selected?" selected":"")} onClick={onSelect}>
     <div className="min-w-0">
-      <div className="text-sm font-medium truncate">{field.label}</div>
+      <div className="text-sm font-medium truncate">{translated}</div>
       <div className="fieldOffset">{field.key}</div>
     </div>
     <input type={field.kind==="date"?"date":field.kind==="string"?"text":"number"}
-      aria-label={fieldLabel} title={field.editable?"支持字段级安全修改":"字段只读或等待验证"}
+      aria-label={fieldLabel} title={t(locale,field.editable?"editor.editable":"editor.readonly")}
       value={draft} onChange={e=>setDraft(e.target.value)}
       onBlur={commit} onKeyDown={e=>{if(e.key==="Enter")e.currentTarget.blur();}}
       disabled={!field.editable}
@@ -51,12 +54,12 @@ function FieldRow({doc,field,selected,onSelect,onEdit}:{
   </div>;
 }
 const codeHex=(n:number)=>"0x"+n.toString(16).toUpperCase().padStart(3,"0");
-function DiffPane({doc}:{doc:RawDocument}) {
+function DiffPane({doc,locale}:{doc:RawDocument;locale:Locale}) {
   const changes=diff(doc.original,currentBytes(doc));
   return <div className="p-4">
-    <p className="muted text-xs mb-3">仅显示实际发生变化的原始字节；未知字段保持原样。</p>
-    {changes.length===0?<p className="text-sm">目前没有字节修改。</p>:
-      <table className="diffTable"><thead><tr><th>偏移</th><th>原始</th><th>修改后</th></tr></thead>
+    <p className="muted text-xs mb-3">{t(locale,"diff.help")}</p>
+    {changes.length===0?<p className="text-sm">{t(locale,"diff.none")}</p>:
+      <table className="diffTable"><thead><tr><th>{t(locale,"diff.offset")}</th><th>{t(locale,"diff.old")}</th><th>{t(locale,"diff.new")}</th></tr></thead>
       <tbody>{changes.map(c=><tr key={c.offset}><td>{codeHex(c.offset)}</td>
       <td>{c.before.toString(16).padStart(2,"0").toUpperCase()}</td>
       <td>{c.after.toString(16).padStart(2,"0").toUpperCase()}</td></tr>)}</tbody></table>}
@@ -71,6 +74,7 @@ export default function App() {
   const [message,setMessage]=useState("");
   const [search,setSearch]=useState("");
   const [theme,setTheme]=useState<"dark"|"light">("dark");
+  const [locale,setLocale]=useState<Locale>("zh-CN");
   const fileInput=useRef<HTMLInputElement>(null);
   const doc=documents.find(x=>x.id===activeId)??null;
   const raw=doc?currentBytes(doc):null;
@@ -80,15 +84,20 @@ export default function App() {
 
   useEffect(()=>{
     document.documentElement.classList.toggle("dark",theme==="dark");
-  },[theme]);
+    document.documentElement.lang=locale;
+  },[theme,locale]);
 
   function importItems(items: ImportedFile[]) {
     if (!items.length) return;
-    const incoming=items.map(item=>createDocument(item.filename,item.bytes,item.sourcePath));
+    const incoming=items.map(item=>{
+      if(item.document)return item.document;
+      if(!item.bytes)throw new Error("Empty imported file");
+      return createDocument(item.filename,item.bytes,item.sourcePath);
+    });
     setDocuments(list=>[...list,...incoming]);
     setActiveId(incoming[incoming.length-1].id);
     setSelectedField(null);
-    setMessage("已导入 "+incoming.length+" 个文件，读取在本地完成");
+    setMessage(t(locale,"message.imported",{count:incoming.length}));
   }
   async function openFiles() {
     try {
@@ -105,8 +114,24 @@ export default function App() {
     try {
       const changedDoc=edit(doc,key,value);
       setDocuments(list=>list.map(x=>x.id===doc.id?changedDoc:x));
-      setMessage(changedDoc===doc?"":"字段 "+key+" 已更新，可在 HEX/差异视图查看");
+      setMessage(changedDoc===doc?"":t(locale,"message.edited",{field:key}));
     }catch(error){setMessage(String(error));}
+  }
+  function updateByte(offset:number,value:number) {
+    if(!doc)return;
+    try {
+      const updated=editByte(doc,offset,value);
+      setDocuments(list=>list.map(x=>x.id===doc.id?updated:x));
+      setMessage(t(locale,"message.byteEdited",{offset:"0x"+offset.toString(16).toUpperCase()}));
+    } catch(error) {setMessage(String(error));}
+  }
+  async function applyJson(text:string) {
+    if(!doc)return;
+    try {
+      const updated=await applyDocumentJson(doc,text);
+      setDocuments(list=>list.map(x=>x.id===doc.id?updated:x));
+      setMessage(t(locale,"message.applied"));
+    } catch(error) {setMessage(String(error));}
   }
   function changeHistory(direction:"undo"|"redo") {
     if(!doc)return;
@@ -116,7 +141,7 @@ export default function App() {
   }
   async function performSave(kind:"wc"|"json") {
     if(!doc)return;
-    try{await saveAs(doc,kind);setMessage("已触发另存为；原始文件不会被修改");}
+    try{if(await saveAs(doc,kind))setMessage(t(locale,"message.saved"));}
     catch(error){setMessage(String(error));}
   }
   function onDrop(event:DragEvent<HTMLElement>) {
