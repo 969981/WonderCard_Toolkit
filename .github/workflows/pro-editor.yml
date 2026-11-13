@@ -43,6 +43,13 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - run: npm install --no-audit --no-fund
       - run: npm run tauri -- build
+      # Native process launch is useful smoke evidence, but not an interactive dialog test.
+      - name: Windows native launch smoke
+        shell: pwsh
+        continue-on-error: true
+        run: ./scripts/windows_native_launch_smoke.ps1
+      - name: Edge browser UI file import/export smoke
+        run: node scripts/windows_browser_io_smoke.mjs
       - uses: actions/upload-artifact@v4
         if: success()
         with:
