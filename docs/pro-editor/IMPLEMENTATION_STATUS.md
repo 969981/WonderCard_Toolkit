@@ -20,7 +20,8 @@
 - HEX 仅允许白名单字段与非法日期保护；新旧 Undo/Redo：`apps/studio/src/lib/wondercard.test.ts`。
 - 四语言 key 与动态占位符测试：`apps/studio/src/i18n.test.ts`。
 - **已确认 CI：23 个 Vitest 测试通过、TypeScript typecheck 通过、Vite production build 通过**，见 [Pro Editor run #43355656454](https://github.com/969981/WonderCard_Toolkit/actions/runs/43355656454)。
-- Windows Edge 浏览器 E2E、Tauri EXE 启动 canary 代码已提交到 `scripts/windows_*_smoke.*`；**最新 Windows CI 运行中，尚不得标为通过**：[run #43356012688](https://github.com/969981/WonderCard_Toolkit/actions/runs/43356012688)。
+- **Windows Edge 浏览器 E2E：已通过**。自动打开合成 WC6、修改并下载二进制、导出/重导入 JSON v2、切换四语言、校验 Full 只读；证据 [Pro Editor run #43357069598](https://github.com/969981/WonderCard_Toolkit/actions/runs/43357069598) 的 `windows-web-e2e` job。**这不是 Tauri 原生 Dialog/FS 交互测试。**
+- **Tauri 原生 EXE 启动 canary：已通过**。此前 [run #43356012688](https://github.com/969981/WonderCard_Toolkit/actions/runs/43356012688) 的 `Windows native launch smoke` 阶段成功，Windows 上程序持续存活 6 秒；此项仅证明进程能够启动，不等于实际打开与保存成功。
 - 历史 Windows Tauri 2 NSIS 构建曾成功并上传 installer artifact，证据 [#43346556664](https://github.com/969981/WonderCard_Toolkit/actions/runs/43346556664)。本次新增代码的 Windows 安装包要看最新 CI。
 
 ## 未完成的重要关口
