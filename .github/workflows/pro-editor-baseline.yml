@@ -1,0 +1,33 @@
+name: Pro Editor legacy baseline
+on:
+  push:
+    branches: [feature/pro-editor-shadcn-tauri]
+    paths:
+      - "wondercard/**"
+      - "web/**"
+      - "tests/**"
+      - "apps/studio/**"
+      - ".github/workflows/pro-editor-baseline.yml"
+  pull_request:
+    paths:
+      - "wondercard/**"
+      - "web/**"
+      - "tests/**"
+      - "apps/studio/**"
+      - ".github/workflows/pro-editor-baseline.yml"
+permissions:
+  contents: read
+jobs:
+  legacy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: python -m unittest discover -s tests -p 'test_legacy_core.py' -v
+      - run: node scripts/check_locales.js
+      - run: python scripts/build_standalone.py
