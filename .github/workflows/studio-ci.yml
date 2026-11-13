@@ -41,6 +41,9 @@ jobs:
           python -m unittest discover -s tests -p "test_readonly_formats.py" -q
           python -m unittest discover -s tests -p "test_typed_draft.py" -q
           python -m unittest discover -s tests -p "test_wc9_checksum.py" -q
+          python -m unittest discover -s tests -p "test_gen4_crypto.py" -q
+          python -m unittest discover -s tests -p "test_checksum_matrix.py" -q
+          python -m unittest discover -s tests -p "test_gen8_gen9_experimental_write.py" -q
       - name: Regenerate typed browser schema and verify parity
         run: |
           python -m wondercard.cli --help >/dev/null
