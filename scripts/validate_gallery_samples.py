@@ -50,6 +50,35 @@ def run(*,timeout=20):
                 if from_document(doc)!=data:
                     raise AssertionError('modified original during no-op export')
                 check=inspect_card_checksum(data,fmt)
+                if fmt in ('wc8','wc9','wa9') and check and check.matches:
+                    # Actual downloaded sample: modify one whitelisted field in
+                    # memory and prove CRC, exact diffs, and reparse, never save.
+                    import copy
+                    from wondercard.typed import FORMATS
+                    edit=copy.deepcopy(doc)
+                    if 'pokemon' in edit['fields']:
+                        section,fld='pokemon','level'
+                        old=edit['fields'][section][fld]
+                        edit['fields'][section][fld]=min(100,old+1) if old<100 else 99
+                    elif 'item' in edit['fields']:
+                        section,fld='item','quantity_1'
+                        old=edit['fields'][section][fld]
+                        edit['fields'][section][fld]=old+1 if old<65535 else 65534
+                    else:
+                        section=None
+                    if section:
+                        modified=from_document(edit)
+                        fixed=inspect_card_checksum(modified,fmt)
+                        assert fixed and fixed.matches
+                        assert modified!=data
+                        diffs=[k for k in range(len(data)) if data[k]!=modified[k]]
+                        card_offset=FORMATS[fmt]['checksum']
+                        field_offset=FORMATS[fmt][section if section=='pokemon' else 'item_fields'][fld][1]
+                        assert set(diffs).issubset({field_offset,field_offset+1,card_offset,card_offset+1}),diffs
+                        assert to_document(modified,fmt=fmt)['fields'][section][fld]==edit['fields'][section][fld]
+                        info['edited_crc_matches']=True
+                        info['edit_field']=section+'.'+fld
+                        info['edited_diff_offsets']=['0x%03X'%x for x in diffs]
                 info.update(status='ok',size=len(data),sha256=sha256(data).hexdigest(),
                     gift_type=doc['preview']['gift_type'],card_id=doc['preview']['card_id'],
                     crc={'available':bool(check),'stored':check.stored,'computed':check.computed,
