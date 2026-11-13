@@ -1,6 +1,6 @@
 use serde::Serialize;
 use std::{fs, path::PathBuf};
-use tauri::AppHandle;
+use tauri::{AppHandle, Manager};
 use tauri_plugin_dialog::DialogExt;
 use crate::atomic::write_new_atomic;
 
@@ -18,7 +18,9 @@ pub struct OpenedCard {
 #[tauri::command]
 pub async fn open_cards_native(app: AppHandle) -> Result<Vec<OpenedCard>, String> {
     tauri::async_runtime::spawn_blocking(move || {
-        let selection = app.dialog().file()
+        let main_window=app.get_webview_window("main")
+            .ok_or_else(||"Main window was not available for the native file picker".to_string())?;
+        let selection = app.dialog().file().set_parent(&main_window)
             .add_filter("WonderCard / JSON v2", &["wc6", "wc7", "wc6full", "wc7full", "bin", "json"])
             .blocking_pick_files();
         let mut cards = Vec::new();
@@ -52,7 +54,9 @@ pub async fn save_card_atomic(app:AppHandle, suggested_name:String,
 {
     validate_save_request(&suggested_name,&kind,data.len())?;
     tauri::async_runtime::spawn_blocking(move || {
-        let dialog=app.dialog().file().set_file_name(suggested_name);
+        let main_window=app.get_webview_window("main")
+            .ok_or_else(||"Main window was not available for the Save As dialog".to_string())?;
+        let dialog=app.dialog().file().set_parent(&main_window).set_file_name(suggested_name);
         let dialog=if kind=="json" {
             dialog.add_filter("JSON v2",&["json"])
         } else {
