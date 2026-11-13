@@ -15,7 +15,9 @@
     pl6:[0xA47,'6'],wb7:[0x310,'7'],wb7full:[0x310,'7'],wr7:[0x140,'7'],
     wc8:[0x2D0,'8'],wc8full:[0x2D0,'8'],wb8:[0x2DC,'8'],wa8:[0x2C8,'8'],wc9:[0x2C8,'9'],wa9:[0x2C8,'9']
   });
-  const isArchive = fmt => Object.hasOwn(ARCHIVE_FORMATS, fmt);
+  const TYPED = window.WC_TYPED_FORMATS || {};
+  const isTyped = fmt => Object.hasOwn(TYPED,fmt);
+  const isArchive = fmt => Object.hasOwn(ARCHIVE_FORMATS, fmt) && !isTyped(fmt);
   const SIZE = 0x108, FULL_SIZE = 0x310, FULL_START = 0x208;
   const IV_ORDER = ['hp','atk','def','spe','spa','spd'];
   const $ = id => document.getElementById(id);
@@ -116,8 +118,84 @@
     if(spec.kind==='u8')v.setUint8(ofs,value);else if(spec.kind==='u16')v.setUint16(ofs,value,true);else v.setUint32(ofs,value,true);
   }
   function readObject(raw,base,manifest,gen){const out={};for(const [k,v] of Object.entries(manifest))out[k]=readField(raw,base,v,gen);return out;}
+
+  function parseTyped(raw,format,filename){
+    const layout=TYPED[format], card=readObject(raw,0,layout.card,layout.gen);
+    const fields={card};
+    if(layout.draft){
+      if(card.card_type===1)fields.pokemon=readObject(raw,0,layout.pokemon,layout.gen);
+      else if(card.card_type===2)fields.item=readObject(raw,0,layout.item,layout.gen);
+    }else if(['pgf','wc5full'].includes(format) && card.card_type===1)
+      fields.pokemon=readObject(raw,0,layout.pokemon,layout.gen);
+    if(layout.checksum!==null){
+      const dv=new DataView(raw.buffer,raw.byteOffset,raw.byteLength);
+      fields.integrity={stored_checksum:dv.getUint16(layout.checksum,true)};
+    }
+    return {schema:'wondercard-typed-draft-v1',format,generation:layout.gen,
+      source_filename:filename||null,source_sha256:null,byte_length:raw.length,raw_hex:bytesToHex(raw),
+      fields,baseline_fields:clone(fields),
+      preview:{generation:layout.gen,gift_type:card.card_type??card.gift_type,card_id:card.card_id??null,species:fields.pokemon?.species??fields.pokemon?.species_internal??null},
+      capability:layout.draft?'L2 semantic read + draft patches only; modified binary export LOCKED':'L2 semantic read; L3 lossless no-op only',
+      warnings:[layout.draft?'Stored checksum/game import not validated. Modified binary export blocked.':'Legacy encryption/format conversion not verified. Read-only.']};
+  }
+  function typedApply(doc){
+    const layout=TYPED[doc.format];
+    if(!layout||doc.schema!=='wondercard-typed-draft-v1')throw Error('Invalid typed draft schema');
+    const raw=hexToBytes(doc.raw_hex);
+    if(raw.length!==layout.size)throw Error('Incorrect byte length');
+    const baseline=parseTyped(raw,doc.format,'source.'+doc.format).fields;
+    if(JSON.stringify(baseline)!==JSON.stringify(doc.baseline_fields))throw Error('Typed field baseline changed');
+    const proposed=flatten(doc.fields), original=flatten(baseline);
+    if(Object.keys(proposed).sort().join('|')!==Object.keys(original).sort().join('|'))throw Error('Field structure changed');
+    const modified=[];
+    for(const key of Object.keys(proposed)){
+      if(proposed[key]===original[key])continue;
+      const [section,name]=key.split('.');
+      if(!layout.draft||section==='integrity'||['card_type','gift_type','species_internal'].includes(name))throw Error('Read-only field: '+key);
+      const spec=layout[section]?.[name];if(!spec)throw Error('Unmapped field: '+key);
+      writeField(raw,0,spec,proposed[key],layout.gen);modified.push(key);
+    }
+    if(JSON.stringify(parseTyped(raw,doc.format,'draft.'+doc.format).fields)!==JSON.stringify(doc.fields))
+      throw Error('Draft byte reparse mismatch');
+    return {raw,modified};
+  }
+  function drawTypedFields(doc){
+    const layout=TYPED[doc.format];
+    const container=$('fields-header');container.innerHTML='';
+    const warning=document.createElement('p');warning.className='warning';warning.textContent=doc.warnings?.[0]||'';container.appendChild(warning);
+    $('pokemon-section').hidden=!doc.fields.pokemon;
+    $('item-section').hidden=!doc.fields.item;
+    $('full-section').hidden=true;
+    for(const [section,parent] of [['card',container],['pokemon',$('fields-pokemon')],['item',$('fields-item')]]){
+      if(!doc.fields[section])continue;
+      if(section!=='card')parent.innerHTML='';
+      for(const [name,spec] of Object.entries(layout[section])){
+        if(!(name in doc.fields[section]))continue;
+        const val=doc.fields[section][name],start=doc.baseline_fields[section][name];
+        const locked=!layout.draft||section==='integrity'||['card_type','gift_type','species_internal'].includes(name);
+        const field=document.createElement('div');field.className='form-group'+(val!==start?' field-changed':'');
+        const top=document.createElement('div');top.className='form-top';
+        const label=document.createElement('label');label.className='field-label';label.textContent=(I.field(name)||name).replace('field.'+name,name)+(locked?' 🔒':'');
+        const offset=document.createElement('span');offset.className='field-offset';offset.textContent=fmtOffset(spec.offset);
+        top.append(label,offset);
+        const input=document.createElement('input');input.className='field-input';input.value=val;input.inputMode='numeric';input.disabled=locked;
+        field.append(top,input);parent.appendChild(field);
+        input.addEventListener('focus',()=>{highlightedOffset=spec.offset;field.classList.add('focused');});
+        input.addEventListener('blur',()=>field.classList.remove('focused'));
+        input.addEventListener('change',()=>{
+          const old=doc.fields[section][name],rawValue=input.value.trim();
+          if(!/^(0x[0-9a-f]+|[0-9]+)$/i.test(rawValue)){toast('Invalid integer: '+name,true);input.value=old;return;}
+          const next=Number(rawValue);doc.fields[section][name]=next;
+          try{applyChanges(doc);field.classList.toggle('field-changed',next!==start);refresh();}
+          catch(err){doc.fields[section][name]=old;input.value=old;toast(err.message,true);}
+        });
+      }
+    }
+  }
+
   function parse(raw,format,filename){
     getFormat(filename||'test.'+format,raw);
+    if (isTyped(format))return parseTyped(raw,format,filename);
     if (isArchive(format)) return {
       schema:'wondercard-toolkit-raw-v1',format,byte_length:raw.length,
       source_filename:filename||null,source_sha256:null,raw_hex:bytesToHex(raw),
@@ -134,6 +212,7 @@
       source_sha256:null,raw_hex:bytesToHex(raw),fields,baseline_fields:clone(fields),preview:makePreview(fields,format,raw),notes:'Edit fields only. raw_hex is authoritative; all unedited bytes are preserved.'};
   }
   function makePreview(fields, format, raw){
+    if(isTyped(format))return {generation:TYPED[format].gen,gift_type:fields.card.card_type??fields.card.gift_type,card_id:fields.card.card_id??null,species:fields.pokemon?.species??fields.pokemon?.species_internal??null};
     if (isArchive(format)) return {generation:ARCHIVE_FORMATS[format][1],gift_type:'unknown',capability:'readonly'};
     const status=fields.status_flags;
     const pos=format.endsWith('full')?FULL_START:0;
@@ -146,6 +225,7 @@
   }
   function flatten(obj,prefix='',result={}) { for(const [key,value] of Object.entries(obj)) {const path=prefix?prefix+'.'+key:key;if(value!==null&&typeof value==='object'&&!Array.isArray(value))flatten(value,path,result);else result[path]=value;}return result; }
   function applyChanges(doc){
+    if(isTyped(doc.format))return typedApply(doc);
     if (isArchive(doc.format)) {
       if (doc.schema !== 'wondercard-toolkit-raw-v1' ||
           Object.keys(doc.fields||{}).length || Object.keys(doc.baseline_fields||{}).length)
@@ -176,8 +256,8 @@
     if(!globalThis.crypto?.subtle)return null;
     try {const hash=await crypto.subtle.digest('SHA-256',bytes);return bytesToHex(new Uint8Array(hash));}catch{return null;}
   }
-  function kindName(fields) {return t(({0:'kind.pokemon',1:'kind.item',3:'kind.bp'})[fields.card_type]||'kind.unknown');}
-  function cardName(file){const f=file.doc.fields;return f.title||(isArchive(file.doc.format)?file.filename:`${f.pokemon?.species?'No.'+f.pokemon.species:t('card.fallback')} · #${f.card_id}`);} 
+  function kindName(fields) {const type=fields.card?.card_type??fields.card?.gift_type??fields.card_type;return t(({0:'kind.pokemon',1:'kind.item',2:'kind.item',3:'kind.bp'})[type]||'kind.unknown');}
+  function cardName(file){const f=file.doc.fields;if(isTyped(file.doc.format))return file.doc.format.toUpperCase()+' · #'+(f.card?.card_id??'—')+' · '+(f.pokemon?.species??f.pokemon?.species_internal??'');return f.title||(isArchive(file.doc.format)?file.filename:`${f.pokemon?.species?'No.'+f.pokemon.species:t('card.fallback')} · #${f.card_id}`);} 
   async function importBytes(filename,raw){
     const fmt=getFormat(filename,raw),doc=parse(raw,fmt,filename);
     doc.source_sha256=await sha256(raw);
@@ -188,7 +268,7 @@
     doc.format=getFormat('source.'+doc.format,bin);
     doc.byte_length=bin.length;
     const actualHash=await sha256(bin);
-    if (isArchive(doc.format)) {
+    if (isArchive(doc.format)||isTyped(doc.format)) {
       if(!doc.source_sha256 || !actualHash || doc.source_sha256.toLowerCase()!==actualHash)
         throw Error(t('archive.hashMismatch'));
     }
@@ -224,6 +304,7 @@
   function drawFields(){
     const state=currentState();if(!state)return;
     const {doc}=state,fields=doc.fields;
+    if(isTyped(doc.format)){drawTypedFields(doc);return;}
     if (isArchive(doc.format)) {
       $('fields-header').innerHTML=`<div class="archive-note"><strong>${escapeHtml(t('archive.title'))}</strong><p>${escapeHtml(t('archive.warning'))}</p><p>${escapeHtml(t('archive.meta',{format:doc.format.toUpperCase(),size:doc.byte_length}))}</p></div>`;
       $('pokemon-section').hidden=true;$('item-section').hidden=true;$('full-section').hidden=true;
