@@ -1,0 +1,50 @@
+name: Pro Editor checks
+on:
+  push:
+    branches: [feature/pro-editor-shadcn-tauri]
+    paths:
+      - "apps/studio/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/pro-editor.yml"
+  pull_request:
+    paths:
+      - "apps/studio/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/pro-editor.yml"
+permissions:
+  contents: read
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+  windows-bundle:
+    needs: frontend
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - uses: dtolnay/rust-toolchain@stable
+      - run: npm ci
+      - run: npm run tauri -- build
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: wondercard-pro-editor-windows-alpha
+          path: apps/studio/src-tauri/target/release/bundle/nsis/*.exe
+          if-no-files-found: error
