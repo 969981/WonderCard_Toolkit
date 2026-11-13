@@ -23,9 +23,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-          cache: npm
-          cache-dependency-path: package-lock.json
-      - run: npm ci
+      # No lockfile yet: use npm install, not npm ci. Lockfile will be committed after first working install.
+      - run: npm install --no-audit --no-fund
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
@@ -37,10 +36,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-          cache: npm
-          cache-dependency-path: package-lock.json
       - uses: dtolnay/rust-toolchain@stable
-      - run: npm ci
+      - run: npm install --no-audit --no-fund
       - run: npm run tauri -- build
       - uses: actions/upload-artifact@v4
         if: success()

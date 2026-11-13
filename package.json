@@ -10,7 +10,7 @@
     "build": "npm run build --workspace=@wondercard/studio",
     "test": "npm run test --workspace=@wondercard/studio",
     "typecheck": "npm run typecheck --workspace=@wondercard/studio",
-    "tauri": "npm run tauri --workspace=@wondercard/studio",
+    "tauri": "npm run tauri --workspace=@wondercard/studio --",
     "test:legacy": "python -m unittest discover -s tests -p 'test_legacy_core.py' -v"
   }
 }
