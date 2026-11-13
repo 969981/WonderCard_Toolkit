@@ -57,6 +57,10 @@ def run(*,timeout=20):
                 if from_document(doc)!=data:
                     raise AssertionError('modified original during no-op export')
                 check=inspect_card_checksum(data,fmt)
+                if fmt in ('wc4','pcd','pgt'):
+                    embedded=next((d for d in doc.get('diagnostics',[]) if d['section']=='embedded_pk4'),None)
+                    if embedded:
+                        info['embedded_pk4']={key:embedded.get(key) for key in ('state','species','checksum_stored','checksum_computed')}
                 if fmt in ('wc8','wc9','wa9') and check and check.matches:
                     # Actual downloaded sample: modify one whitelisted field in
                     # memory and prove CRC, exact diffs, and reparse, never save.
