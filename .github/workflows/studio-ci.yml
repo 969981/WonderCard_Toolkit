@@ -33,8 +33,14 @@ jobs:
           node --check web/typed_manifest.js
       - name: Verify locale keys and placeholders
         run: node scripts/check_locales.js
-      - name: Test lossless typed parsing, drafts and existing core
-        run: python -m unittest discover -s tests -q
+      - name: Test lossless typed parsing, CRC safety, drafts and existing core
+        run: |
+          # Browser scripts rely on an optional Playwright/Chromium install.
+          # Do not accidentally import those as ordinary unit tests.
+          python -m unittest discover -s tests -p "test_editor_synthetic.py" -q
+          python -m unittest discover -s tests -p "test_readonly_formats.py" -q
+          python -m unittest discover -s tests -p "test_typed_draft.py" -q
+          python -m unittest discover -s tests -p "test_wc9_checksum.py" -q
       - name: Regenerate typed browser schema and verify parity
         run: |
           python -m wondercard.cli --help >/dev/null
@@ -45,7 +51,7 @@ jobs:
       - name: Upload generated portable HTML (not yet committed)
         uses: actions/upload-artifact@v4
         with:
-          name: WonderCard-Studio-v0.5-Offline
+          name: WonderCard-Studio-v0.6-WC9-CRC-Offline
           path: web/standalone.html
       - name: Check standalone safety and language module
         run: |
