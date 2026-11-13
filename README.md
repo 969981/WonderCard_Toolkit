@@ -2,7 +2,7 @@
 
 > 全世代 Pokémon 配信档案馆、无损解析器与可视化编辑工作台（规划阶段）。
 
-本项目目标是研究、查看、检索、批量审计和**安全修改**历代 Mystery Gift / Wonder Card / 配信事件资源。当前仓库正在初始化；此前聊天中的 v0.2 Python + 离线 HTML 原型尚未导入本仓库，请勿把规划项视为已实现功能。
+本项目目标是研究、查看、检索、批量审计和**安全修改**历代 Mystery Gift / Wonder Card / 配信事件资源。本分支已包含可离线运行的 **WonderCard Studio v0.3 前端代码与 i18n**（见 [web/README.md](web/README.md)）；已引入 WC6/WC7 的 Python 核心模块。其他世代、PCD/PGF/BCAT 和完整 CLI 仍需按 Issues 实施，请勿把“规划格式”理解为“已支持编辑”。
 
 ## 核心原则
 
@@ -11,6 +11,15 @@
 3. **一代一格式适配器**：不将 WC6 字段偏移直接套用到 WC7/8/9、PGF/PGT、PCD 或 BCAT。
 4. **未知与保留字段不动**：不静默清零、补齐、规范化，也不覆盖原始文件。
 5. **研究与合法性判断分离**：模板结构通过校验不等于官方事件或宝可梦合法性得到证明。
+
+## 现在就能运行的前端
+
+直接打开 [web/standalone.html](web/standalone.html)，或者下载仓库后运行 `web/index.html`。**无需联网，不需安装 Python**。首批支持 zh-CN、zh-TW、en、ja 四种界面语言；可拖入 WC6/WC7 及 Full，查看、修改基础字段、HEX DIFF、导出 JSON/审计 CSV。Full 修改后安全写回尚未验证，因此禁用该操作。公共仓库内置的是合成演示卡，不是官方配信档案。
+
+```bash
+node scripts/check_locales.js
+python scripts/build_standalone.py
+```
 
 ## 计划功能
 
