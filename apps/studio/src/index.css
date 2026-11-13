@@ -65,3 +65,8 @@ button:focus-visible,input:focus-visible { outline: 2px solid var(--ring); outli
 table.diffTable { border-collapse:collapse; width:100%; font-family:Consolas,monospace; font-size:12px; }
 .diffTable td,.diffTable th { padding:7px; border-bottom:1px solid var(--border); text-align:left; }
 @media (max-width: 1050px) { .shell{grid-template-columns:190px minmax(0,1fr);} .editorGrid{grid-template-columns:minmax(0,1fr);} .panel + .panel{border-left:0;border-top:1px solid var(--border);min-height:320px;} .workspace{overflow:auto;} }
+
+.hexByte.writable { cursor: text; }
+.hexByte:not(.writable) { cursor: default; }
+.hexInput { width:21px; min-width:21px; height:22px; font-family:inherit; font-size:11px; text-align:center; background:var(--accent); color:var(--foreground); border:1px solid var(--primary); border-radius:3px; padding:0; }
+.languageSelect { padding:5px 8px; border:1px solid var(--border); border-radius:6px; background:var(--surface); color:var(--foreground); font-size:12px; }
