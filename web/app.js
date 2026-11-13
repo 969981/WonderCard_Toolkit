@@ -15,7 +15,9 @@
     pl6:[0xA47,'6'],wb7:[0x310,'7'],wb7full:[0x310,'7'],wr7:[0x140,'7'],
     wc8:[0x2D0,'8'],wc8full:[0x2D0,'8'],wb8:[0x2DC,'8'],wa8:[0x2C8,'8'],wc9:[0x2C8,'9'],wa9:[0x2C8,'9']
   });
-  const isArchive = fmt => Object.hasOwn(ARCHIVE_FORMATS, fmt);
+  const TYPED = window.WC_TYPED_FORMATS || {};
+  const isTyped = fmt => Object.hasOwn(TYPED,fmt);
+  const isArchive = fmt => Object.hasOwn(ARCHIVE_FORMATS, fmt) && !isTyped(fmt);
   const SIZE = 0x108, FULL_SIZE = 0x310, FULL_START = 0x208;
   const IV_ORDER = ['hp','atk','def','spe','spa','spd'];
   const $ = id => document.getElementById(id);
@@ -116,8 +118,112 @@
     if(spec.kind==='u8')v.setUint8(ofs,value);else if(spec.kind==='u16')v.setUint16(ofs,value,true);else v.setUint32(ofs,value,true);
   }
   function readObject(raw,base,manifest,gen){const out={};for(const [k,v] of Object.entries(manifest))out[k]=readField(raw,base,v,gen);return out;}
+
+  function crc16Ccitt(raw, zeroAt=null){
+    let crc=0xFFFF;
+    for(let i=0;i<raw.length;i++){
+      const v=zeroAt!==null&&i>=zeroAt&&i<zeroAt+2?0:raw[i];
+      crc^=v<<8;
+      for(let j=0;j<8;j++)crc=((crc&0x8000)?(crc<<1)^0x1021:crc<<1)&0xFFFF;
+    }
+    return crc;
+  }
+  const wc9OriginalCRCValid=raw=>raw.length===0x2C8 &&
+    new DataView(raw.buffer,raw.byteOffset,raw.byteLength).getUint16(0x2C4,true)===crc16Ccitt(raw,0x2C4);
+  function wc9FieldSafe(field,value){
+    if(field==='pokemon.level'||field==='pokemon.met_level')return value>=0&&value<=100;
+    if(field.startsWith('pokemon.iv_'))return value<=31||[253,254,255].includes(value);
+    if(field.startsWith('pokemon.ev_'))return value<=252;
+    return true;
+  }
+  function parseTyped(raw,format,filename){
+    const layout=TYPED[format], card=readObject(raw,0,layout.card,layout.gen);
+    const fields={card};
+    if(layout.draft){
+      if(card.card_type===1)fields.pokemon=readObject(raw,0,layout.pokemon,layout.gen);
+      else if(card.card_type===2)fields.item=readObject(raw,0,layout.item,layout.gen);
+    }else if(['pgf','wc5full'].includes(format) && card.card_type===1)
+      fields.pokemon=readObject(raw,0,layout.pokemon,layout.gen);
+    if(layout.checksum!==null){
+      const dv=new DataView(raw.buffer,raw.byteOffset,raw.byteLength);
+      fields.integrity={stored_checksum:dv.getUint16(layout.checksum,true)};
+      if(format==='wc9'){fields.integrity.calculated_checksum=crc16Ccitt(raw,0x2C4);fields.integrity.checksum_valid=wc9OriginalCRCValid(raw);}
+    }
+    return {schema:'wondercard-typed-draft-v1',format,generation:layout.gen,
+      source_filename:filename||null,source_sha256:null,byte_length:raw.length,raw_hex:bytesToHex(raw),
+      fields,baseline_fields:clone(fields),
+      preview:{generation:layout.gen,gift_type:card.card_type??card.gift_type,card_id:card.card_id??null,species:fields.pokemon?.species??fields.pokemon?.species_internal??null},
+      capability:format==='wc9'&&wc9OriginalCRCValid(raw)?'L4 experimental WC9 editing; original CRC validated':layout.draft?'L2 semantic read + draft patches only; modified binary export LOCKED':'L2 semantic read; L3 lossless no-op only',
+      warnings:[format==='wc9'&&wc9OriginalCRCValid(raw)?t('typed.crcValid'):layout.draft?t('typed.locked'):t('archive.warning')]};
+  }
+  function typedApply(doc){
+    const layout=TYPED[doc.format];
+    if(!layout||doc.schema!=='wondercard-typed-draft-v1')throw Error('Invalid typed draft schema');
+    const raw=hexToBytes(doc.raw_hex);
+    if(raw.length!==layout.size)throw Error('Incorrect byte length');
+    const baseline=parseTyped(raw,doc.format,'source.'+doc.format).fields;
+    if(JSON.stringify(baseline)!==JSON.stringify(doc.baseline_fields))throw Error('Typed field baseline changed');
+    const proposed=flatten(doc.fields),original=flatten(baseline);
+    if(Object.keys(proposed).sort().join('|')!==Object.keys(original).sort().join('|'))throw Error('Field structure changed');
+    const modified=[];
+    for(const key of Object.keys(proposed)){
+      if(proposed[key]===original[key])continue;
+      const [section,name]=key.split('.');
+      if(!layout.draft||section==='integrity'||['card_type','gift_type','species_internal'].includes(name))
+        throw Error('Read-only field: '+key);
+      const spec=layout[section]?.[name];if(!spec)throw Error('Unmapped field: '+key);
+      writeField(raw,0,spec,proposed[key],layout.gen);modified.push(key);
+    }
+    const fields=parseTyped(raw,doc.format,'draft.'+doc.format).fields;
+    const semantic=x=>Object.fromEntries(Object.entries(x).filter(([key])=>key!=='integrity'));
+    if(JSON.stringify(semantic(fields))!==JSON.stringify(semantic(doc.fields)))throw Error('Draft byte reparse mismatch');
+    const base=hexToBytes(doc.raw_hex);
+    const safe=doc.format==='wc9'&&wc9OriginalCRCValid(base)&&
+      modified.every(k=>layout.writable_fields.includes(k)&&wc9FieldSafe(k,proposed[k]));
+    if(safe&&modified.length){
+      new DataView(raw.buffer,raw.byteOffset,raw.byteLength).setUint16(0x2C4,crc16Ccitt(raw,0x2C4),true);
+      if(!wc9OriginalCRCValid(raw))throw Error('WC9 checksum repair failed');
+      modified.push('integrity.stored_checksum');
+    }
+    return {raw,modified,exportable:modified.length===0||safe};
+  }
+  function drawTypedFields(doc){
+    const layout=TYPED[doc.format];
+    const container=$('fields-header');container.innerHTML='';
+    const warning=document.createElement('p');warning.className='warning';warning.textContent=doc.warnings?.[0]||'';container.appendChild(warning);
+    $('pokemon-section').hidden=!doc.fields.pokemon;
+    $('item-section').hidden=!doc.fields.item;
+    $('full-section').hidden=true;
+    for(const [section,parent] of [['card',container],['pokemon',$('fields-pokemon')],['item',$('fields-item')]]){
+      if(!doc.fields[section])continue;
+      if(section!=='card')parent.innerHTML='';
+      for(const [name,spec] of Object.entries(layout[section])){
+        if(!(name in doc.fields[section]))continue;
+        const val=doc.fields[section][name],start=doc.baseline_fields[section][name];
+        const locked=!layout.draft||section==='integrity'||['card_type','gift_type','species_internal'].includes(name);
+        const field=document.createElement('div');field.className='form-group'+(val!==start?' field-changed':'');
+        const top=document.createElement('div');top.className='form-top';
+        const label=document.createElement('label');label.className='field-label';label.textContent=(I.field(name)||name).replace('field.'+name,name)+(locked?' 🔒':'');
+        const offset=document.createElement('span');offset.className='field-offset';offset.textContent=fmtOffset(spec.offset);
+        top.append(label,offset);
+        const input=document.createElement('input');input.className='field-input';input.id='typed-'+section+'-'+name;label.htmlFor=input.id;input.value=val;input.inputMode='numeric';input.disabled=locked;
+        field.append(top,input);parent.appendChild(field);
+        input.addEventListener('focus',()=>{highlightedOffset=spec.offset;field.classList.add('focused');});
+        input.addEventListener('blur',()=>field.classList.remove('focused'));
+        input.addEventListener('change',()=>{
+          const old=doc.fields[section][name],rawValue=input.value.trim();
+          if(!/^(0x[0-9a-f]+|[0-9]+)$/i.test(rawValue)){toast('Invalid integer: '+name,true);input.value=old;return;}
+          const next=Number(rawValue);doc.fields[section][name]=next;
+          try{applyChanges(doc);field.classList.toggle('field-changed',next!==start);refresh();}
+          catch(err){doc.fields[section][name]=old;input.value=old;toast(err.message,true);}
+        });
+      }
+    }
+  }
+
   function parse(raw,format,filename){
     getFormat(filename||'test.'+format,raw);
+    if (isTyped(format))return parseTyped(raw,format,filename);
     if (isArchive(format)) return {
       schema:'wondercard-toolkit-raw-v1',format,byte_length:raw.length,
       source_filename:filename||null,source_sha256:null,raw_hex:bytesToHex(raw),
@@ -134,6 +240,7 @@
       source_sha256:null,raw_hex:bytesToHex(raw),fields,baseline_fields:clone(fields),preview:makePreview(fields,format,raw),notes:'Edit fields only. raw_hex is authoritative; all unedited bytes are preserved.'};
   }
   function makePreview(fields, format, raw){
+    if(isTyped(format))return {generation:TYPED[format].gen,gift_type:fields.card.card_type??fields.card.gift_type,card_id:fields.card.card_id??null,species:fields.pokemon?.species??fields.pokemon?.species_internal??null};
     if (isArchive(format)) return {generation:ARCHIVE_FORMATS[format][1],gift_type:'unknown',capability:'readonly'};
     const status=fields.status_flags;
     const pos=format.endsWith('full')?FULL_START:0;
@@ -146,6 +253,7 @@
   }
   function flatten(obj,prefix='',result={}) { for(const [key,value] of Object.entries(obj)) {const path=prefix?prefix+'.'+key:key;if(value!==null&&typeof value==='object'&&!Array.isArray(value))flatten(value,path,result);else result[path]=value;}return result; }
   function applyChanges(doc){
+    if(isTyped(doc.format))return typedApply(doc);
     if (isArchive(doc.format)) {
       if (doc.schema !== 'wondercard-toolkit-raw-v1' ||
           Object.keys(doc.fields||{}).length || Object.keys(doc.baseline_fields||{}).length)
@@ -172,12 +280,41 @@
     return {raw,modified};
   }
   function getDiff(original,updated){ const diff=[];for(let i=0;i<original.length;i++)if(original[i]!==updated[i])diff.push({offset:i,old:original[i],now:updated[i]});return diff; }
-  async function sha256(bytes){
-    if(!globalThis.crypto?.subtle)return null;
-    try {const hash=await crypto.subtle.digest('SHA-256',bytes);return bytesToHex(new Uint8Array(hash));}catch{return null;}
+  // Portable SHA-256 fallback for file:// and opaque/offline preview origins.
+  function sha256Sync(data){
+    const K=[0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+      0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+      0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+      0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+      0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+      0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+      0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+      0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+    const H=[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+    const b=Array.from(data),n=b.length, bitHi=Math.floor(n/0x20000000),bitLo=(n*8)>>>0;
+    b.push(0x80);while(b.length%64!==56)b.push(0);
+    b.push((bitHi>>>24)&255,(bitHi>>>16)&255,(bitHi>>>8)&255,bitHi&255,(bitLo>>>24)&255,(bitLo>>>16)&255,(bitLo>>>8)&255,bitLo&255);
+    const r=(x,n)=>(x>>>n)|(x<<(32-n));
+    for(let start=0;start<b.length;start+=64){
+      const w=new Uint32Array(64);
+      for(let i=0;i<16;i++){const j=start+i*4;w[i]=((b[j]<<24)|(b[j+1]<<16)|(b[j+2]<<8)|b[j+3])>>>0;}
+      for(let i=16;i<64;i++){const x=w[i-15],y=w[i-2];w[i]=(w[i-16]+(r(x,7)^r(x,18)^(x>>>3))+w[i-7]+(r(y,17)^r(y,19)^(y>>>10)))>>>0;}
+      let [a,c,d,e,f,g,h,k]=H;
+      for(let i=0;i<64;i++){
+        const t1=(k+(r(f,6)^r(f,11)^r(f,25))+((f&g)^(~f&h))+K[i]+w[i])>>>0;
+        const t2=((r(a,2)^r(a,13)^r(a,22))+((a&c)^(a&d)^(c&d)))>>>0;
+        k=h;h=g;g=f;f=(e+t1)>>>0;e=d;d=c;c=a;a=(t1+t2)>>>0;
+      }
+      const v=[a,c,d,e,f,g,h,k];for(let i=0;i<8;i++)H[i]=(H[i]+v[i])>>>0;
+    }
+    return H.map(n=>n.toString(16).padStart(8,'0')).join('');
   }
-  function kindName(fields) {return t(({0:'kind.pokemon',1:'kind.item',3:'kind.bp'})[fields.card_type]||'kind.unknown');}
-  function cardName(file){const f=file.doc.fields;return f.title||(isArchive(file.doc.format)?file.filename:`${f.pokemon?.species?'No.'+f.pokemon.species:t('card.fallback')} · #${f.card_id}`);} 
+  async function sha256(bytes){
+    if(globalThis.crypto?.subtle)try {const hash=await crypto.subtle.digest('SHA-256',bytes);return bytesToHex(new Uint8Array(hash));}catch{ /* fallback */ }
+    return sha256Sync(bytes);
+  }
+  function kindName(fields) {const type=fields.card?.card_type??fields.card?.gift_type??fields.card_type;return t(({0:'kind.pokemon',1:'kind.item',2:'kind.item',3:'kind.bp'})[type]||'kind.unknown');}
+  function cardName(file){const f=file.doc.fields;if(isTyped(file.doc.format))return file.doc.format.toUpperCase()+' · #'+(f.card?.card_id??'—')+' · '+(f.pokemon?.species??f.pokemon?.species_internal??'');return f.title||(isArchive(file.doc.format)?file.filename:`${f.pokemon?.species?'No.'+f.pokemon.species:t('card.fallback')} · #${f.card_id}`);} 
   async function importBytes(filename,raw){
     const fmt=getFormat(filename,raw),doc=parse(raw,fmt,filename);
     doc.source_sha256=await sha256(raw);
@@ -188,7 +325,7 @@
     doc.format=getFormat('source.'+doc.format,bin);
     doc.byte_length=bin.length;
     const actualHash=await sha256(bin);
-    if (isArchive(doc.format)) {
+    if (isArchive(doc.format)||isTyped(doc.format)) {
       if(!doc.source_sha256 || !actualHash || doc.source_sha256.toLowerCase()!==actualHash)
         throw Error(t('archive.hashMismatch'));
     }
@@ -199,7 +336,7 @@
   async function importOne(file){if(file.name.toLowerCase().endsWith('.json'))await importJSON(file.name,await file.text());else await importBytes(file.name,new Uint8Array(await file.arrayBuffer()));}
   async function importFiles(incoming){let ok=0,errs=[];for(const file of incoming){try{await importOne(file);ok++;}catch(err){errs.push(`${file.name}: ${err.message}`);}}if(errs.length)toast(errs.slice(0,3).join(' | '),true);else if(ok)toast(t('files.imported',{n:ok}));}
   function current(){return files[selected];}
-  function currentState(){const entry=current();if(!entry)return null;const doc=entry.doc;const {raw,modified}=applyChanges(doc);const baseline=hexToBytes(doc.raw_hex);return {entry,doc,raw,baseline,modified,diff:getDiff(baseline,raw)};}
+  function currentState(){const entry=current();if(!entry)return null;const doc=entry.doc;const {raw,modified,exportable=true}=applyChanges(doc);const baseline=hexToBytes(doc.raw_hex);return {entry,doc,raw,baseline,modified,exportable,diff:getDiff(baseline,raw)};}
   function displayField(obj,spec,key,section,doc){
     const value=obj[key],base=section==='full'?0:doc.format.endsWith('full')?FULL_START:0;
     const absolute=base+spec.offset,edited=doc.baseline_fields[section==='header'?'ignored':section];
@@ -224,6 +361,7 @@
   function drawFields(){
     const state=currentState();if(!state)return;
     const {doc}=state,fields=doc.fields;
+    if(isTyped(doc.format)){drawTypedFields(doc);return;}
     if (isArchive(doc.format)) {
       $('fields-header').innerHTML=`<div class="archive-note"><strong>${escapeHtml(t('archive.title'))}</strong><p>${escapeHtml(t('archive.warning'))}</p><p>${escapeHtml(t('archive.meta',{format:doc.format.toUpperCase(),size:doc.byte_length}))}</p></div>`;
       $('pokemon-section').hidden=true;$('item-section').hidden=true;$('full-section').hidden=true;
@@ -255,25 +393,25 @@
   function drawFileList(){
     const term=$('search').value.trim().toLowerCase();$('file-count').textContent=t('files.count',{n:files.length});
     const filtered=files.map((entry,index)=>({entry,index})).filter(({entry})=>{
-      const f=entry.doc.fields;return [entry.filename,f.title,f.card_id,f.pokemon?.species].some(x=>String(x??'').toLowerCase().includes(term));
+      const f=entry.doc.fields;return [entry.filename,f.title,f.card_id,f.card?.card_id,f.pokemon?.species,f.pokemon?.species_internal].some(x=>String(x??'').toLowerCase().includes(term));
     });
     $('file-list').innerHTML=filtered.length?filtered.map(({entry,index})=>{
       const f=entry.doc.fields,dirty=Object.keys(flatten(f)).some(k=>flatten(f)[k]!==flatten(entry.doc.baseline_fields)[k]);
-      return `<button class="file-entry${index===selected?' selected':''}" data-index="${index}" role="option" aria-selected="${index===selected}"><span class="file-symbol">${entry.doc.format.toUpperCase().replace('FULL','F')}</span><span class="file-info"><strong title="${escapeHtml(entry.filename)}">${escapeHtml(cardName(entry))}${dirty?' •':''}</strong><small>${isArchive(entry.doc.format)?escapeHtml(t('archive.readonly')):`#${f.card_id} · ${escapeHtml(f.date||t('files.invalidDate'))}`}</small></span></button>`;
+      return `<button class="file-entry${index===selected?' selected':''}" data-index="${index}" role="option" aria-selected="${index===selected}"><span class="file-symbol">${entry.doc.format.toUpperCase().replace('FULL','F')}</span><span class="file-info"><strong title="${escapeHtml(entry.filename)}">${escapeHtml(cardName(entry))}${dirty?' •':''}</strong><small>${isArchive(entry.doc.format)?escapeHtml(t('archive.readonly')):isTyped(entry.doc.format)?('GEN '+entry.doc.generation+' · '+(entry.doc.format==='wc9'&&entry.doc.fields.integrity?.checksum_valid?'CRC OK':TYPED[entry.doc.format].draft?'DRAFT':'READ ONLY')):`#${f.card_id} · ${escapeHtml(f.date||t('files.invalidDate'))}`}</small></span></button>`;
     }).join(''):`<div class="no-results">${escapeHtml(t('files.none'))}</div>`;
     document.querySelectorAll('.file-entry').forEach(btn=>btn.addEventListener('click',()=>{selected=Number(btn.dataset.index);render();}));
   }
   function drawHero(state){
     const {doc,entry,modified}=state,fields=doc.fields;
-    $('hero-gen').textContent=isArchive(doc.format)?'GEN '+ARCHIVE_FORMATS[doc.format][1]:doc.format.startsWith('wc6')?'GEN VI':'GEN VII';
+    $('hero-gen').textContent=isTyped(doc.format)?'GEN '+TYPED[doc.format].gen:isArchive(doc.format)?'GEN '+ARCHIVE_FORMATS[doc.format][1]:doc.format.startsWith('wc6')?'GEN VI':'GEN VII';
     $('hero-format').textContent=doc.format.toUpperCase();$('hero-kind').textContent=kindName(fields).toUpperCase();
     $('dirty-pill').hidden=modified.length===0;
-    $('card-title').textContent=isArchive(doc.format)?entry.filename:(fields.title||`Wonder Card #${fields.card_id}`);
-    $('card-subtitle').textContent=isArchive(doc.format)?t('archive.readonly'):`${entry.filename} · ${fields.pokemon?'No.'+fields.pokemon.species:kindName(fields)}`;
-    $('hero-id').textContent=isArchive(doc.format)?'—':'#'+String(fields.card_id).padStart(4,'0');
-    $('hero-date').textContent=fields.date||t('hero.unknownDate');$('hero-size').textContent=doc.byte_length+' bytes';
-    $('export-bin').disabled=doc.format.endsWith('full')&&modified.length>0;
-    $('export-bin').title=$('export-bin').disabled?t('error.fullLocked'):'';
+    $('card-title').textContent=isTyped(doc.format)?cardName(entry):isArchive(doc.format)?entry.filename:(fields.title||`Wonder Card #${fields.card_id}`);
+    $('card-subtitle').textContent=isTyped(doc.format)?doc.capability:isArchive(doc.format)?t('archive.readonly'):`${entry.filename} · ${fields.pokemon?'No.'+fields.pokemon.species:kindName(fields)}`;
+    $('hero-id').textContent=isTyped(doc.format)?'#'+String(fields.card?.card_id??'—'):isArchive(doc.format)?'—':'#'+String(fields.card_id).padStart(4,'0');
+    $('hero-date').textContent=isTyped(doc.format)?'—':fields.date||t('hero.unknownDate');$('hero-size').textContent=doc.byte_length+' bytes';
+    $('export-bin').disabled=(doc.format.endsWith('full')&&modified.length>0)||(isTyped(doc.format)&&modified.length>0&&!state.exportable);
+    $('export-bin').title=$('export-bin').disabled?(isTyped(doc.format)?t('typed.locked'):t('error.fullLocked')):isTyped(doc.format)&&modified.length?t('typed.crcValid'):'';
   }
   function drawHex(state){
     const {raw,diff}=state, changed=new Set(diff.map(x=>x.offset));
@@ -285,7 +423,7 @@
     const view=$('hex-view'),oldScroll=view.scrollTop;view.innerHTML=lines.join('');view.scrollTop=oldScroll;
     view.querySelectorAll('button').forEach(btn=>btn.addEventListener('click',()=>{highlightedOffset=Number(btn.dataset.offset);view.querySelectorAll('button.selected').forEach(n=>n.classList.remove('selected'));btn.classList.add('selected');$('hex-validation').textContent=t('validation.selected',{offset:fmtOffset(highlightedOffset),value:'0x'+raw[highlightedOffset].toString(16).toUpperCase().padStart(2,'0')});}));
     $('diff-view').innerHTML=diff.length?diff.map(x=>`<div class="diff-item"><b>${fmtOffset(x.offset)}</b><span class="from"> &nbsp; ${x.old.toString(16).toUpperCase().padStart(2,'0')}</span> → <span class="to">${x.now.toString(16).toUpperCase().padStart(2,'0')}</span></div>`).join(''):`<p>${escapeHtml(t('diff.empty'))}</p>`;
-    $('hex-validation').textContent=state.doc.format.endsWith('full')&&state.modified.length?t('validation.fullLocked'):t('validation.untouched');
+    $('hex-validation').textContent=isTyped(state.doc.format)&&state.modified.length?(state.exportable?t('typed.crcValid'):t('typed.locked')):state.doc.format.endsWith('full')&&state.modified.length?t('validation.fullLocked'):t('validation.untouched');
   }
   function drawJson(state){
     const doc=clone(state.doc);doc.preview=makePreview(doc.fields,doc.format,state.raw);doc.notes='Edit fields only. raw_hex is original bytes; changes exist in fields.';
@@ -293,6 +431,11 @@
   }
   function drawAudit(state){
     const {doc,raw,modified,diff}=state;const f=doc.fields,pk=f.pokemon;
+    if(isTyped(doc.format)){
+      const rows=[[t('audit.format'),doc.format.toUpperCase()],[t('audit.bytes'),String(raw.length)],[t('audit.sha'),doc.source_sha256||'—'],[t('audit.modifiedFields'),String(modified.length)],[t('audit.modifiedBytes'),String(diff.length)],[t('audit.result'),doc.warnings.join('; ')]];
+      $('audit-items').innerHTML=rows.map(([k,v])=>'<div class="audit-row"><span>'+escapeHtml(k)+'</span><strong>'+escapeHtml(v)+'</strong></div>').join('');
+      $('audit-diff').textContent=diff.length?diff.map(x=>fmtOffset(x.offset)).join(', '):t('audit.noDiff');return;
+    }
     if (isArchive(doc.format)) {
       const rows=[[t('audit.format'),doc.format.toUpperCase()],[t('audit.bytes'),`${raw.length} bytes`],
         [t('audit.sha'),doc.source_sha256||t('audit.shaUnavailable')],
@@ -328,8 +471,8 @@
   function toast(msg,error=false){const box=$('toast');box.textContent=msg;box.className='toast show'+(error?' error':'');clearTimeout(toast.timer);toast.timer=setTimeout(()=>box.className='toast',4500);}
   function download(filename,bytes,type){const blob=new Blob([bytes],{type});const url=URL.createObjectURL(blob);const link=document.createElement('a');link.href=url;link.download=filename;document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),5000);}
   function basenameWithoutExt(s){return s.replace(/\.(wc6|wc7|wc6full|wc7full|json|pgt|pcd|wc4|pgf|wc5full|pl6|wb7|wb7full|wr7|wc8|wc8full|wb8|wa8|wc9|wa9)$/i,'');}
-  function exportBinary(){try{const state=currentState();if(!state)return;if(state.doc.format.endsWith('full')&&state.modified.length)throw Error(t('error.fullLocked'));
-      const filename=basenameWithoutExt(state.entry.filename)+(isArchive(state.doc.format)?'_copy':'_edited')+'.'+state.doc.format;
+  function exportBinary(){try{const state=currentState();if(!state)return;if(isTyped(state.doc.format)&&state.modified.length&&!state.exportable)throw Error(t('typed.locked'));if(state.doc.format.endsWith('full')&&state.modified.length)throw Error(t('error.fullLocked'));
+      const filename=basenameWithoutExt(state.entry.filename)+((isArchive(state.doc.format)||isTyped(state.doc.format))?'_copy':'_edited')+'.'+state.doc.format;
       download(filename,state.raw,'application/octet-stream');toast(t('toast.exportBin',{filename,n:state.diff.length}));
     }catch(e){toast(e.message,true);}}
   function exportJson(){try{const state=currentState();if(!state)return;const doc=clone(state.doc);doc.preview=makePreview(doc.fields,doc.format,state.raw);download(basenameWithoutExt(state.entry.filename)+'.'+doc.format+'.json',JSON.stringify(doc,null,2)+'\n','application/json');toast(t('toast.exportJson'));}catch(e){toast(e.message,true);}}
@@ -338,7 +481,7 @@
     const names=['file','format','card_id','title','date','card_type','species','pid_type','pid_rule','nature','ivs_raw','language','origin_game','edited_fields','changed_bytes','full_write_locked'];
     const rows=files.map(entry=>{
       const doc=entry.doc,f=doc.fields,pk=f.pokemon||{},state=applyChanges(doc),base=hexToBytes(doc.raw_hex),diff=getDiff(base,state.raw);
-      return [entry.filename,doc.format,f.card_id??'',f.title??'',f.date||'',f.card_type??'',pk.species??'',pk.pid_type??'',({0:'fixed_pid',1:'random',2:'always_shiny',3:'never_shiny'})[pk.pid_type]??'',pk.nature??'',IV_ORDER.map(s=>pk[`iv_${s}`]??'').join('/'),pk.language??'',pk.origin_game??'',state.modified.length,diff.length,(doc.format.endsWith('full')&&state.modified.length)||isArchive(doc.format)?'yes':'no'];
+      return [entry.filename,doc.format,f.card_id??f.card?.card_id??'',f.title??'',f.date||'',f.card_type??f.card?.card_type??'',pk.species??pk.species_internal??'',pk.pid_type??'',({0:'fixed_pid',1:'random',2:'always_shiny',3:'never_shiny'})[pk.pid_type]??'',pk.nature??'',IV_ORDER.map(s=>pk[`iv_${s}`]??'').join('/'),pk.language??'',pk.origin_game??'',state.modified.length,diff.length,(doc.format.endsWith('full')&&state.modified.length)||isArchive(doc.format)?'yes':'no'];
     });
     const csv='\ufeff'+[names,...rows].map(line=>line.map(value=>'"'+String(value??'').replaceAll('"','""')+'"').join(',')).join('\r\n');
     download('wondercard_audit.csv',csv,'text/csv;charset=utf-8');toast(t('toast.exportCsv',{n:rows.length}));
@@ -368,6 +511,6 @@
     importBytes('synthetic_demo.wc6',bytes).then(()=>toast(t('files.imported',{n:1}))).catch(e=>toast(e.message,true));
   }
   // Public developer API used by automated roundtrip checks and embedders.
-  window.WonderCardStudio={parse,applyChanges,getDiff,importBytes,importJSON,getFiles:()=>files,getLocale:()=>I.getLocale(),setLocale:lang=>I.setLocale(lang),select:index=>{selected=index;render();},currentState};
+  window.WonderCardStudio={parse,applyChanges,getDiff,crc16Ccitt,wc9OriginalCRCValid,importBytes,importJSON,getFiles:()=>files,getLocale:()=>I.getLocale(),setLocale:lang=>I.setLocale(lang),select:index=>{selected=index;render();},currentState};
   init();
 })();

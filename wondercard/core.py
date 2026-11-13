@@ -19,6 +19,7 @@ FULL_SIZE = 0x310
 FULL_CORE_START = 0x208
 EDITABLE_FORMAT_SET = {"wc6", "wc7", "wc6full", "wc7full"}
 from .registry import READ_ONLY, resolve_named_format, to_raw_document, from_raw_document
+from .typed import FORMATS as TYPED_FORMATS, to_typed_document, from_typed_document
 FORMAT_SET = EDITABLE_FORMAT_SET | set(READ_ONLY)
 SHINY_MODES = {0: "fixed_pid", 1: "random", 2: "always_shiny", 3: "never_shiny"}
 IV_ORDER = ("hp", "atk", "def", "spe", "spa", "spd")
@@ -214,6 +215,8 @@ def inspect_bytes(blob: bytes, fmt: str) -> dict[str, Any]:
 
 def to_document(blob: bytes, *, filename: str | None = None, fmt: str | None = None) -> dict[str, Any]:
     actual = _get_format(filename, blob, fmt)
+    if actual in TYPED_FORMATS:
+        return to_typed_document(blob, fmt=actual, filename=filename)
     if actual in READ_ONLY:
         return to_raw_document(blob, filename=filename, fmt=actual)
     parsed = _fields(blob, actual)
@@ -243,6 +246,8 @@ def _flatten(p: dict[str, Any], prefix: str = "") -> dict[str, Any]:
 
 
 def from_document(doc: dict[str, Any], *, crc_policy: str = "keep") -> bytes:
+    if doc.get("schema") == "wondercard-typed-draft-v1":
+        return from_typed_document(doc)
     if doc.get("schema") == "wondercard-toolkit-raw-v1":
         return from_raw_document(doc)
     if doc.get("schema") != "wondercard-toolkit-v1":
@@ -288,6 +293,9 @@ def roundtrip_check(blob: bytes, fmt: str) -> bool:
 
 def audit_blob(blob: bytes, fmt: str) -> dict[str, Any]:
     doc = to_document(blob, fmt=fmt)
+    if fmt in TYPED_FORMATS:
+        cd = doc['fields']['card']; pk = doc['fields'].get('pokemon', {})
+        return {'format': fmt, 'sha256': doc['source_sha256'], 'card_id': cd.get('card_id'), 'card_type': cd.get('card_type', cd.get('gift_type')), 'species': pk.get('species', pk.get('species_internal')), 'pid_type': pk.get('pid_type'), 'nature': pk.get('nature'), 'roundtrip_ok': roundtrip_check(blob, fmt), 'warnings': doc['warnings'], 'capability': doc['capability']}
     if fmt in READ_ONLY:
         return {"format": fmt, "sha256": doc["source_sha256"], "roundtrip_ok": roundtrip_check(blob, fmt), "warnings": doc["warnings"], "capability": doc["capability"]}
     fields, preview = doc["fields"], doc["preview"]
