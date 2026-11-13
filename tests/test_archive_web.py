@@ -15,7 +15,7 @@ def run():
         errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
         page.set_content(html,wait_until='domcontentloaded')
         page.wait_for_function('window.WonderCardStudio.getFiles().length===1')
-        for fmt,size in [('pgt',0x104),('pcd',0x358),('wc5full',0x2d0),('pl6',0xa47),('wr7',0x140),('wa9',0x2c8)]:
+        for fmt,size in [('pl6',0xa47),('wr7',0x140),('wb7',0x310),('wb7full',0x310),('wc8full',0x2d0)]:
             data=bytes(((i*31+9)&255) for i in range(size))
             page.evaluate('''async ({fmt,bytes})=>await window.WonderCardStudio.importBytes('sample.'+fmt,new Uint8Array(bytes))''',{'fmt':fmt,'bytes':list(data)})
             assert page.locator('.archive-note').is_visible(),fmt
@@ -35,6 +35,6 @@ def run():
             assert page.locator('#fields-header input').count()==0
         assert not errors, errors
         browser.close()
-    print('PASS: ten archive formats, unchanged binary export, 9-language readonly UI')
+    print('PASS: five still-unparsed archive formats, unchanged binary export, 9-language readonly UI')
 
 if __name__=='__main__':run()
