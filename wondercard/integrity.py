@@ -52,9 +52,9 @@ def update_wc9_checksum(data: bytearray) -> int:
 # Read-only checksum research layouts; this is NOT a permit to export edits.
 # WB8 and WA8 have no exposed dedicated card checksum properties in PKHeX.
 READONLY_CHECKSUM_LAYOUTS = {
-    'wc8': (0x2D0, 0x2CC, 'candidate, awaiting real sample correlation'),
-    'wa9': (0x2C8, 0x2C0, 'candidate, awaiting real sample correlation'),
-    'wc5full': (0x2D0, 0x2CE, 'documented CRC over 0x000..0x2CD; await real sample correlation'),
+    'wc8': (0x2D0, 0x2CC, 'correlated with 2 real samples; game import not tested'),
+    'wa9': (0x2C8, 0x2C0, 'correlated with 2 real samples; game import not tested'),
+    'wc5full': (0x2D0, 0x2CE, 'correlated with 2 real WC5Full samples; write remains locked'),
 }
 
 
